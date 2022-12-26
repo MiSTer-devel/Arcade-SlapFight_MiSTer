@@ -1,0 +1,31 @@
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/rom_loader.sv
+set_global_assignment -name VERILOG_FILE rtl/ttl_chips.v
+set_global_assignment -name VERILOG_FILE rtl/slap_ram.v
+set_global_assignment -name VERILOG_FILE rtl/slap_roms.v
+set_global_assignment -name VERILOG_FILE rtl/slapcore.v
+set_global_assignment -name VERILOG_FILE rtl/hiscore.v
+set_global_assignment -name VERILOG_FILE rtl/pause.v
+set_global_assignment -name VHDL_FILE rtl/dpram_dc.vhd
+
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49_bus.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49_noise.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49_exp.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49_eg.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49_div.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/jt49_cen.v
+set_global_assignment -name VERILOG_FILE rtl/jt49/filter/jt49_dcrm2.v
+
+set_global_assignment -name VHDL_FILE rtl/T80/T80as.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_Reg.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_MCode.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_ALU.vhd
+set_global_assignment -name VHDL_FILE rtl/T80/T80_Pack.vhd
+
+set_global_assignment -name VERILOG_FILE rtl/jtframe_dcrm.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe_fir.v
+set_global_assignment -name VERILOG_FILE rtl/jtframe_jt49_filters.v
+
+set_global_assignment -name SYSTEMVERILOG_FILE Arcade-SlapFight.sv
+set_global_assignment -name SDC_FILE Arcade-SlapFight.sdc

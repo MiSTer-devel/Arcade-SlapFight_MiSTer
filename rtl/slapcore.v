@@ -292,10 +292,10 @@ sprite_layer slap_sprites(
 	.CPU_RAM_LBUF(CPU_RAM_LBUF),
 	.dn_addr(dn_addr),
 	.dn_data(dn_data),
+	.ep9_cs_i(ep9_cs_i),
 	.ep10_cs_i(ep10_cs_i),
 	.ep11_cs_i(ep11_cs_i),
 	.ep12_cs_i(ep12_cs_i),
-	.ep13_cs_i(ep13_cs_i),
 	.dn_wr(dn_wr),
 
 	.SP_RAMD_out(SP_RAMD_out),
@@ -537,7 +537,7 @@ dpram_dc #(.widthad_a(11)) U8M_Z80M_RAM //sf
 assign Z80A_databus_in = rZ80A_databus_in;
 
 //Z80A CPU main program program ROM #1
-eprom_1 U8N_A77_00
+eprom_0 U8N_A77_00
 (
 	.ADDR(Z80A_addrbus[14:0]),//
 	.CLK(clkm_36MHZ),//
@@ -545,12 +545,12 @@ eprom_1 U8N_A77_00
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep1_cs_i),
+	.CS_DL(ep0_cs_i),
 	.WR(dn_wr)
 );
 
 //Z80A CPU main program program ROM #2
-eprom_2 U8P_A77_01
+eprom_1 U8P_A77_01
 (
 	.ADDR({SEL_ROM_BANK_SH,Z80A_addrbus[13:0]}),//
 	.CLK(clkm_36MHZ),//
@@ -558,7 +558,7 @@ eprom_2 U8P_A77_01
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep2_cs_i),
+	.CS_DL(ep1_cs_i),
 	.WR(dn_wr)
 );
 
@@ -763,11 +763,12 @@ wire [3:0] U6_7D_out,U6D_out,U7D_out,U7E_out;
 
 //------------------------------------------------- MiSTer data write selector -------------------------------------------------//
 //Instantiate MiSTer data write selector to generate write enables for loading ROMs into the FPGA's BRAM
-wire ep1_cs_i, ep2_cs_i, ep3_cs_i, ep4_cs_i, ep5_cs_i, ep6_cs_i, ep7_cs_i, ep8_cs_i,ep9_cs_i,ep10_cs_i,ep11_cs_i,ep12_cs_i,ep13_cs_i,ep14_cs_i;
+wire ep0_cs_i, ep1_cs_i, ep2_cs_i, ep3_cs_i, ep4_cs_i, ep5_cs_i, ep6_cs_i, ep7_cs_i, ep8_cs_i,ep9_cs_i,ep10_cs_i,ep11_cs_i,ep12_cs_i,ep13_cs_i,ep_dummy_cs_i;
 
 selector DLSEL
 (
 	.ioctl_addr(dn_addr),
+	.ep0_cs(ep0_cs_i),
 	.ep1_cs(ep1_cs_i),
 	.ep2_cs(ep2_cs_i),
 	.ep3_cs(ep3_cs_i),
@@ -781,7 +782,7 @@ selector DLSEL
 	.ep11_cs(ep11_cs_i),
 	.ep12_cs(ep12_cs_i),
 	.ep13_cs(ep13_cs_i),
-	.ep14_cs(ep14_cs_i)
+	.ep_dummy_cs(ep_dummy_cs_i)
 );
 
 
@@ -805,7 +806,7 @@ wire [18:0] FG_ROM_ADDR;
 
 wire [7:0] S2_U12D_AU_A77_02_out;
 
-eprom_9 S2_U12D_AU_A77_02
+eprom_2 S2_U12D_AU_A77_02  //Audio Program ROM
 (
 	.ADDR(CPU_AUA[12:0]),//
 	.CLK(clkm_36MHZ),//
@@ -814,7 +815,7 @@ eprom_9 S2_U12D_AU_A77_02
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep9_cs_i),
+	.CS_DL(ep2_cs_i),
 	.WR(dn_wr)
 );
 

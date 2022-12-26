@@ -30,15 +30,14 @@
 		<part crc="87f4705a" name="a77_02.12d"/>
 		<part crc="33CADC93" name="a77_03.6g"/>
 		<part crc="2AC7B943" name="a77_04.6f"/>
-		<part crc="2AC7B943" name="a77_04.6f"/>		
 		<part crc="974E2EA9" name="a77_05.6p"/>
 		<part crc="5FAEEEA3" name="a77_06.6n"/>
 		<part crc="E92D9D60" name="a77_07.6m"/>
-		<part crc="B6358305" name="a77_08.6k"/>		
+		<part crc="B6358305" name="a77_08.6k"/>
 		<part crc="587113AE" name="a77_09.7h"/>
 		<part crc="422D946B" name="a77_10.8h"/>
 		<part crc="B1B7B925" name="a77_11.7j"/>
-		<part crc="8545D397" name="a77_12.8j"/>	
+		<part crc="8545D397" name="a77_12.8j"/>
 	</rom>
 	<rom index="3" md5="none">
 		<part>

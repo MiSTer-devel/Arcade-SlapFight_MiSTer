@@ -20,10 +20,10 @@ module sprite_layer (
 
 	input [24:0] dn_addr,
 	input [7:0] dn_data,
+	input ep9_cs_i,
 	input ep10_cs_i,
 	input ep11_cs_i,
 	input ep12_cs_i,
-	input ep13_cs_i,
 	input dn_wr,
 
 	output [7:0] SP_RAMD_out,
@@ -337,7 +337,7 @@ wire [14:0] SPROM_ADDR = {SPR_EXTRA_out[7:6],SPR_IDX_out,SPR_VPIX_out[3:0],SPR_8
 
 
 
-eprom_10 SP_09
+eprom_9 SP_09
 (
 	.ADDR(SPROM_ADDR),
 	.CLK(master_clk),//
@@ -345,12 +345,12 @@ eprom_10 SP_09
 	.ADDR_DL(dn_addr),
 	.CLK_DL(!master_clk),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep10_cs_i),
+	.CS_DL(ep9_cs_i),
 	.WR(dn_wr)
 );
 
 
-eprom_11 SP_10
+eprom_10 SP_10
 (
 	.ADDR(SPROM_ADDR),//
 	.CLK(master_clk),//
@@ -358,11 +358,11 @@ eprom_11 SP_10
 	.ADDR_DL(dn_addr),
 	.CLK_DL(!master_clk),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep11_cs_i),
+	.CS_DL(ep10_cs_i),
 	.WR(dn_wr)
 );
 
-eprom_12 SP_11
+eprom_11 SP_11
 (
 	.ADDR(SPROM_ADDR),//
 	.CLK(master_clk),//
@@ -370,11 +370,11 @@ eprom_12 SP_11
 	.ADDR_DL(dn_addr),
 	.CLK_DL(!master_clk),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep12_cs_i),
+	.CS_DL(ep11_cs_i),
 	.WR(dn_wr)
 );
 
-eprom_13 SP_12
+eprom_12 SP_12
 (
 	.ADDR(SPROM_ADDR),//
 	.CLK(master_clk),//
@@ -382,7 +382,7 @@ eprom_13 SP_12
 	.ADDR_DL(dn_addr),
 	.CLK_DL(!master_clk),//
 	.DATA_IN(dn_data),
-	.CS_DL(ep13_cs_i),
+	.CS_DL(ep12_cs_i),
 	.WR(dn_wr)
 );
 /*

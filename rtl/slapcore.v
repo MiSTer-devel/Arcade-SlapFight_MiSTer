@@ -140,10 +140,11 @@ ROM14 U2C_ROM14(
 wire [3:0] U1J_sum,U2J_sum,U1H_sum;
 wire U1J_cout,U2J_cout,U1H_cout,CPU_RAM_SYNC,CPU_RAM_LBUF;
 reg IO2_SF;
-	
+
+always @(posedge RESET_n) IO2_SF<=DIP1[6];	
+
 always @(posedge H_SCRL_LO_SEL) begin 
 	HSCRL[7:0]<=Z80A_databus_out;		//U3J
-	IO2_SF<=DIP1[6];
 end
 
 always @(posedge H_SCRL_HI_SEL) HSCRL[8]<=Z80A_databus_out[0];		//U1G_A

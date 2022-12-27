@@ -47,8 +47,8 @@ wire SPR_CPU_RAM_SELECT=!nCPU_RAM_SELECT;
 wire nCPU_RAM_SYNC=!CPU_RAM_SYNC;
 //*********START: chip selects **************
 //rom address should get set to zero when CPU_RAM_SYNC
-always @(posedge pixel_clk) ROM18_addr <= (!RESET_LD_CTR) ? 8'b00000100 : 
-														(!nCPU_RAM_SYNC) ? 0 : ROM18_addr+1; //S2_U4B & S2_U2C - is there a clear?
+always @(posedge pixel_clk or negedge nCPU_RAM_SYNC) 	ROM18_addr <= (!nCPU_RAM_SYNC) ? 0 :
+																		(!RESET_LD_CTR) ? 8'b00000100 : ROM18_addr+1; //S2_U4B & S2_U2C - is there a clear?
 
 wire [7:0] ROM18_out;
 ROM18 S2_U2B_ROM18(
@@ -236,7 +236,7 @@ wire SPR32_BUF_WR = 	S2_U4C_C&S2_U4A_6;
 reg [3:0] SPR_32K_HI;
 always @(posedge S2_U5A_A) SPR_32K_HI <= (!SPR32_BUF_WR) ? S2_U4F_sum : S2_U2F_out;
 
-assign SPR_32K_A[7:0] = (CPU_RAM_SYNC) ? SPR_VPOS_CNT : VPIX;
+assign SPR_32K_A[7:0] = (CPU_RAM_SYNC) ? SPR_VPOS_CNT : VPIX-1;
 assign SPR_32K_A[11:8] = SPR_32K_HI;
 
 ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U9E(

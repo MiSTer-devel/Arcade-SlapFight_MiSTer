@@ -39,7 +39,7 @@ DIP Switch Settings:
 	Mode			   - Normal Game*, Screen Test Mode
 	Demo Sounds		   - ON*, OFF 
 	Coinage            - 1 Coin/1 Play*, 1 Coin/2 Play, 2 Coins/1 Play, 2 Coins/3 Play
-	Difficulty         - A*, B, C, D
+	Difficulty         - A, B*, C, D
 	Extend             - 30000 Every 100000*, 50000 Every 200000, 50000 Only, 100000 Only
 	Fighter Count      - 1,2,3* & 5
 	Dip Switch Display - OFF*, ON (show dip switch configuration) 

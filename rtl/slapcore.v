@@ -7,7 +7,7 @@
 //  Orientation: Vertical
 //
 //  Hardware Description by Anton Gale
-//  https://github.com/antongale/EXERION
+//  https://github.com/MiSTer-devel/Arcade-SlapFight_MiSTer
 //
 //============================================================================
 `timescale 1ns/1ps
@@ -139,8 +139,13 @@ ROM14 U2C_ROM14(
 
 wire [3:0] U1J_sum,U2J_sum,U1H_sum;
 wire U1J_cout,U2J_cout,U1H_cout,CPU_RAM_SYNC,CPU_RAM_LBUF;
+reg IO2_SF;
+	
+always @(posedge H_SCRL_LO_SEL) begin 
+	HSCRL[7:0]<=Z80A_databus_out;		//U3J
+	IO2_SF<=DIP1[6];
+end
 
-always @(posedge H_SCRL_LO_SEL) HSCRL[7:0]<=Z80A_databus_out;		//U3J
 always @(posedge H_SCRL_HI_SEL) HSCRL[8]<=Z80A_databus_out[0];		//U1G_A
 always @(posedge pixel_clk) HPIXSCRL[8:0]<={U1H_sum[0],U2J_sum,U1J_sum}; //U2H & U1C bit 0
 
@@ -505,15 +510,16 @@ ls138x U9K( //sf
   .Y({ATRRAM,CHARAM,SEL_MCU_PORT,SPRITE_RAM,BACKGRAM_2,BACKGRAM_1,AUDIO_CPU_PORT,SEL_Z80M_RAM})
 );
 
-wire RESET_68705,IO_C_SPRITE_COLOUR,U9J_Q5,SEL_ROM_BANK_SH,INT_ENABLE,IO_4_CPU_RAM,IO2_SF,AU_ENABLE;
+wire RESET_68705,IO_C_SPRITE_COLOUR,U9J_Q5,SEL_ROM_BANK_SH,INT_ENABLE,IO_4_CPU_RAM,AU_ENABLE,IO2_SFx;
 
 mux1_8 U9J( //sf
 	.nEN(Z80M_IOREQ|Z80_WR),
 	.nRST(RESET_n),
 	.D(Z80A_addrbus[0]),
 	.A(Z80A_addrbus[3:1]),
-	.Q({RESET_68705,IO_C_SPRITE_COLOUR,U9J_Q5,SEL_ROM_BANK_SH,INT_ENABLE,IO_4_CPU_RAM,IO2_SF,AU_ENABLE})
+	.Q({RESET_68705,IO_C_SPRITE_COLOUR,U9J_Q5,SEL_ROM_BANK_SH,INT_ENABLE,IO_4_CPU_RAM,IO2_SFx,AU_ENABLE})
 );
+
 
 
 //main CPU (Z80A) work RAM - dual port RAM for hi-score logic

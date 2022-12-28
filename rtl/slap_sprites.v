@@ -45,7 +45,7 @@ wire SPR_CPU_RAM_SELECT=!nCPU_RAM_SELECT;
 wire nCPU_RAM_SYNC=!CPU_RAM_SYNC;
 //*********START: chip selects **************
 //rom address should get set to zero when CPU_RAM_SYNC
-always @(posedge pixel_clk or negedge nCPU_RAM_SYNC) 	ROM18_addr <= (!nCPU_RAM_SYNC) ? 0 :
+always @(posedge pixel_clk or negedge nCPU_RAM_SYNC) 	ROM18_addr <= (!nCPU_RAM_SYNC) ? 8'd0 :
 																		(!RESET_LD_CTR) ? 8'b00000100 : ROM18_addr+1; //S2_U4B & S2_U2C - is there a clear?
 
 wire [7:0] ROM18_out;
@@ -92,7 +92,7 @@ reg [7:0] SPR_ROM1617_ADDR;
 
 wire SPR_ROM_ADDR_RST=RST_REG_CTR|SPR_CPU_RAM_SELECT; //S2_U4C_D
 
-always @(posedge npixel_clk or posedge SPR_ROM_ADDR_RST) SPR_ROM1617_ADDR <= (SPR_ROM_ADDR_RST) ? 0 : SPR_ROM1617_ADDR+1; //clear on RST going high, may not be clocked - observe behaviour
+always @(posedge npixel_clk or posedge SPR_ROM_ADDR_RST) SPR_ROM1617_ADDR <= (SPR_ROM_ADDR_RST) ? 8'd0 : SPR_ROM1617_ADDR+1; //clear on RST going high, may not be clocked - observe behaviour
 
 wire [7:0] ROM17_out;
 wire [7:0] ROM16_out;
@@ -116,7 +116,7 @@ always @(posedge pixel_clk) S2_U1F_out <= ({ROM16_out[1:0],ROM17_out[3:0]});
 wire SPR_INC_CNT=S2_U1F_out[3];
 wire RST_REG_CTR=S2_U1F_out[5];
 
-always @(posedge SPR_INC_CNT or posedge SPR_CPU_RAM_SELECT) SPR_CNT <= (SPR_CPU_RAM_SELECT) ? 0 : SPR_CNT+12'd1;  //this code doesn't see the clear is it isn't clocking at the time
+always @(posedge SPR_INC_CNT or posedge SPR_CPU_RAM_SELECT) SPR_CNT <= (SPR_CPU_RAM_SELECT) ? 12'd0 : SPR_CNT+12'd1;  //this code doesn't see the clear is it isn't clocking at the time
 
 wire S2_U1G_7,S2_U1G_9,S2_U1G_10,SPR_LAT_INDX,SPR_LAT_VPOS,SPR_LAT_XDAT,SPR_LAT_HPOS,S2_U1G_O0;
 ls138x S2_U1G( //sf
@@ -151,7 +151,7 @@ reg [7:0] SPR_VPOS_D;
 reg [7:0] SPR_EXT_D;
 
 reg [9:0] SPR_IDX_D;
-reg [3:0] SPR_COL_D;
+//reg [3:0] SPR_COL_D;
 reg [8:0] SPR_HPOS_D;
 
 wire [3:0] SPR_VPIX;
@@ -161,7 +161,7 @@ always @(posedge SPR_LAT_INDX) SPR_IDX_D[7:0] <= SPRITE_RAM_D;	//S2_U1J
 always @(posedge SPR_LAT_HPOS) SPR_HPOS_D[7:0] <= SPRITE_RAM_D;	//S2_U1L
 always @(posedge SPR_LAT_XDAT) begin //S2_U1K
 	SPR_HPOS_D[8]	<=SPRITE_RAM_D[0];
-	SPR_COL_D		<=({SPRITE_RAM_D[4],SPRITE_RAM_D[3],SPRITE_RAM_D[2],SPRITE_RAM_D[1]});
+//	SPR_COL_D		<=({SPRITE_RAM_D[4],SPRITE_RAM_D[3],SPRITE_RAM_D[2],SPRITE_RAM_D[1]});
 	SPR_IDX_D[9:8]	<=SPRITE_RAM_D[7:6];
 	SPR_EXT_D      <=SPRITE_RAM_D;
 end
@@ -201,11 +201,11 @@ wire S2_U7BB_Q;
 wire S2_U7BB_nQ;// = !S2_U7BB_Q;
 
 always @(posedge SPR32_CLK) begin
-	SPR_VPIX_CNT <= (!S2_U7B_AnQ) ? 0 				: (S2_U7BB_Q) ? SPR_VPIX_CNT+1 : SPR_VPIX_CNT; //S2_U7C
+	SPR_VPIX_CNT <= (!S2_U7B_AnQ) ? 5'd0			: (S2_U7BB_Q) ? SPR_VPIX_CNT+1 : SPR_VPIX_CNT; //S2_U7C
 	SPR_VPOS_CNT <= (!S2_U7B_AnQ) ? SPR_VPOS_D 	: (S2_U7BB_Q) ? SPR_VPOS_CNT+1 : SPR_VPOS_CNT; //S2_u5F & S2_U7F
 end
 
-assign SPR_VPIX[3:0]=(!SPR_REG_OE) ? SPR_VPIX_CNT[3:0] : 0; //S2_U5C 
+assign SPR_VPIX[3:0]=(!SPR_REG_OE) ? SPR_VPIX_CNT[3:0] : 4'd0; //S2_U5C 
 
 wire S2_U4C_A = S2_U7BB_nQ|S2_U1G_10;
 wire S2_U4C_B = S2_U7BB_nQ|S2_U1G_9;
@@ -444,10 +444,10 @@ wire S2_U5A_D=SPR_LB_LD&S2_U4A_11;
 always @(posedge pixel_clk) LNBF_CNT <= (!SPR_LB_LD) ? ({SPR_EXTRA_out[0],SPR_HPOS_out}) : 
 													 (!S2_U5A_D) ? LNBF_CNT-1 : LNBF_CNT; //S2_U1M,U2M & U3M
 
-assign LINEBUF_A_A = (CPU_RAM_LBUF) ? 0 :
+assign LINEBUF_A_A = (CPU_RAM_LBUF) ? 9'd0 :
 							  (!SPR_LINEA) ? HPIX_LT : LNBF_CNT; //S2_U2T, U4T
 
-assign LINEBUF_B_A = (CPU_RAM_LBUF) ? 0 :
+assign LINEBUF_B_A = (CPU_RAM_LBUF) ? 9'd0 :
 							  (!SPR_LINEB) ? HPIX_LT : LNBF_CNT; //S2_U2T, U4T
 							  
 always @(posedge SPR_ROM_LD) SP_PX_SEL_D <= SPR_EXTRA_out[4:1]; //S2_U5L
@@ -500,11 +500,11 @@ reg [7:0] pixel_blank;
 
 //pixel blanker not enabled S2_u8C
 always @(posedge pixel_clk) begin
-	pixel_blank <= (!nCPU_RAM_SELECT) ? 0 : ({pixel_blank[6:0],nCPU_RAM_SELECT});
+	pixel_blank <= (!nCPU_RAM_SELECT) ? 8'd0 : ({pixel_blank[6:0],nCPU_RAM_SELECT});
 end
 wire clear_pixel=pixel_blank[7];
 
-wire [7:0] pix_out2;
+//wire [7:0] pix_out2;
 always @(posedge pixel_clk) SP_PX_D = (!SPR_LINEA) ?  LINEA_PIXEL : LINEB_PIXEL;
 assign pix_out2=(!clear_pixel) ? 8'b00000000 : SP_PX_D;
 assign pixel_output=SP_PX_D;

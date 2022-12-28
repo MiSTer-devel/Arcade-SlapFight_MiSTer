@@ -51,11 +51,7 @@ reg [8:0] HPIXSCRL;
 
 
 reg LINE_CLK2;
-
-//wire IO2_SF; //screen flip
 wire RESET_H_COUNTERS,RESET_V_COUNTERS;
-
-//assign IO2_SF=1'b0;
 
 //vertical counter
 always @(posedge LINE_CLK) begin
@@ -141,15 +137,6 @@ always @(posedge pixel_clk) HPIXSCRL[8:0]<={U1H_sum[0],U2J_sum,U1J_sum}; //U2H &
 
 
 wire U7B_D,U7C_C,U4B_D;
-/* REMOVE NEXT CLEAN UP
-wire U1L_A,U1L_D,BG_SEL,U1K_B,BG_S1,BG_S0;
-assign BG_SEL=!IO2_SF^!HPIXSCRL[2];
-assign U1L_D= !IO2_SF^!HPIXSCRL[0];
-assign U1L_A= !IO2_SF^HPIXSCRL[1];
-*/
-//assign U1K_B=!(U1L_A&U1L_D&BG_SEL);
-
-
 assign U7B_D=!(U1C_Q[3]|!IO_4_CPU_RAM);
 assign CPU_RAM_SELECT=!(LINE_CLK2|!IO_4_CPU_RAM);
 assign CPU_RAM_SYNC=!(U7B_D&CPU_RAM_SELECT);
@@ -351,12 +338,6 @@ assign clk_6M_3=!U6Q_out[2];
 
 
 wire PUR = 1'b1;
-//pixel counters
-//reg [8:0] pixH = 9'b000000000;
-//reg [7:0] pixV = 8'b00000000;
-wire [10:0] vramaddr;
-
-
 
 //Z80 address & databus definitions
 wire [15:0] Z80A_addrbus;
@@ -369,13 +350,7 @@ wire [15:0] AUA,CPU_AUA;
 wire [7:0] AUD_in;
 wire [7:0] AUD_out;
 wire AUIMREQ,AUWR,AURD;
-
 reg Z80_DO_En;
-
-//coin input
-wire nCOIN;
-
-
 
 //First Z80 CPU responsible for main game logic, background, foreground & sprites
 T80pa Z80A(
@@ -395,8 +370,6 @@ T80pa Z80A(
 	.WR_n(Z80_WR),
 	.RD_n(Z80_RD)
 );
-
-
 
 wire RD_BUFFER_FULL_68705,WR_BUFFER_FULL_68705;
 
@@ -667,6 +640,15 @@ wire m_start1p  	= CONTROLS[6];
 wire m_start2p  	= CONTROLS[7];
 wire m_coin   		= CONTROLS[8];
 
+reg [7:0] AY1_IOA_in,AY1_IOB_in,AY2_IOA_in,AY2_IOB_in;
+
+always @(posedge ayclk_1p5M) begin
+	AY1_IOA_in<=DIP1;
+	AY1_IOB_in<=DIP2;
+	AY2_IOA_in<=({4'b1111,m_left,m_right,m_down,m_up});
+	AY2_IOB_in<=({1'b1,m_coin,m_start2p,m_start1p,2'b11,m_shoot,m_shoot2});
+end
+
 jt49_bus AY_1_S2_U11G(
     .rst_n(AU_ENABLE),
     .clk(maincpuclk_6M),    				// signal on positive edge 
@@ -685,8 +667,8 @@ jt49_bus AY_1_S2_U11G(
     .C(ay12F_craw),
     .sample(AY12F_sample),
 
-    .IOA_in(DIP1),							//Dip Switch #1
-    .IOB_in(DIP2)								//Dip Switch #2
+    .IOA_in(AY1_IOA_in),					//Dip Switch #1 - DIP1
+    .IOB_in(AY1_IOB_in)						//Dip Switch #2 - DIP2
 );
 
 jt49_bus AY_2_S2_11J(
@@ -707,8 +689,8 @@ jt49_bus AY_2_S2_11J(
     .C(ay12V_craw),
     .sample(AY12V_sample),
 
-    .IOA_in({4'b1111,m_left,m_right,m_down,m_up}),					//Control Inputs #1
-    .IOB_in({1'b1,m_coin,m_start2p,m_start1p,2'b11,m_shoot,m_shoot2})					//Control Inputs #1
+    .IOA_in(AY2_IOA_in),					//Control Inputs #1
+    .IOB_in(AY2_IOB_in)						//Control Inputs #2
 
 );
 

@@ -41,7 +41,7 @@ assign HPIX_LT_out	= HPIX_LT;
 	wire FG_SYNC			= !(FG_CLK&(SCREEN_FLIP ^ !HPIX_LT[0])&(SCREEN_FLIP ^  HPIX_LT[1])); //U4C_B
 	wire colour_copy		= FG_SYNC|pixel_clk; //U4B_C
 
-	wire FG_RAM_nOE		= (FG_CLK) 		? 1'b0 : Z80_RD; //U4D (LS157) - output enable
+//	wire FG_RAM_nOE		= (FG_CLK) 		? 1'b0 : Z80_RD; //U4D (LS157) - output enable
 	
 	wire FG_SELECT			= (CPU_RAM_SYNC|FG_SYNC);
 	wire FG_S0				= !( SCREEN_FLIP&FG_SELECT);
@@ -147,7 +147,7 @@ wire U2A_SF_B_Q,U1A_SF_B_nQ;
 reg U1A_SF_B_Q;
 reg U2A_SF_B_Qx;
 wire	FG_CHIP_SEL=(ATRRAM&CHARAM);
-wire nFG_CHIP_SEL=!FG_CHIP_SEL;
+//wire nFG_CHIP_SEL=!FG_CHIP_SEL;
 wire nFG_CLK=!FG_CLK;
 
 reg [7:0] count_wait;

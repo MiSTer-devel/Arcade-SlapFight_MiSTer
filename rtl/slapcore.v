@@ -876,7 +876,7 @@ always @(posedge AUD_INT_CLK or negedge RESET_n) AU_INT_ON<=(!RESET_n) ? 1'b1 : 
 //always @(posedge AUD_INT_CLK) AU_INT_ON<=1'b0; //removed audio start logic
 
 always @(negedge aucpuclk_3M) U7A_TMR_out <= (nRST_AU) ? 0 : U7A_TMR_out+1;
-assign AUDIO_CPU_NMI=!U7A_TMR_out[13];
+assign AUDIO_CPU_NMI= (pcb) ? !U7A_TMR_out[12] : !U7A_TMR_out[13];
 
 
 //  ****** FINAL 12-BIT ANALOGUE OUTPUT ********
@@ -891,12 +891,15 @@ always @(posedge pixel_clk) begin
 					  (SP_PX_D[0]|SP_PX_D[1]|SP_PX_D[2]|SP_PX_D[3])	? SP_PX_D : BG_PX_D;
 end
 
+wire [7:0] r;
+wire [7:0] b;
+wire [7:0] g;
 
 cprom_1 S2_U12Q  //Red Colour PROM
 (
 	.ADDR(COLOUR_REG),//
 	.CLK(clkm_36MHZ),//
-	.DATA(RED),//
+	.DATA(r),//
 
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
@@ -909,7 +912,7 @@ cprom_2 S2_U12P  //Blue Colour PROM
 (
 	.ADDR(COLOUR_REG),//
 	.CLK(clkm_36MHZ),//
-	.DATA(BLUE),//
+	.DATA(b),//
 
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
@@ -922,7 +925,7 @@ cprom_3 S2_U12N  //Green Colour PROM
 (
 	.ADDR(COLOUR_REG),//
 	.CLK(clkm_36MHZ),//
-	.DATA(GREEN),//
+	.DATA(g),//
 
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
@@ -949,6 +952,15 @@ ROM_12M S2_U12N(
     .addr(COLOUR_REG),
     .data(GREEN)
 );*/
+
+reg hide;
+always @(posedge pixel_clk) begin
+	hide = (HPIX >= 284);
+end
+
+assign RED = hide ? 4'h0 : r;
+assign BLUE = hide ? 4'h0 : b;
+assign GREEN = hide ? 4'h0 : g;
 
 assign H_SYNC = LINE_CLK;
 assign V_SYNC = ROM15_out[0];

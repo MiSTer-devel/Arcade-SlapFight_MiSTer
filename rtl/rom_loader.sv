@@ -38,14 +38,15 @@
 module selector
 (
 	input logic [24:0] ioctl_addr,
-	output logic ep0_cs, ep1_cs, ep2_cs, ep3_cs, ep4_cs, ep5_cs, ep6_cs, ep7_cs, ep8_cs, ep9_cs, ep10_cs, ep11_cs, ep12_cs, ep13_cs,ep_dummy_cs
+	output logic ep0_cs, ep0b_cs, ep1_cs, ep2_cs, ep3_cs, ep4_cs, ep5_cs, ep6_cs, ep7_cs, ep8_cs, ep9_cs, ep10_cs, ep11_cs, ep12_cs, ep13_cs,ep_dummy_cs,cp1_cs,cp2_cs,cp3_cs
 );
 
 	always_comb begin
-		{ep0_cs, ep1_cs, ep2_cs, ep3_cs, ep4_cs, ep5_cs, ep6_cs, ep7_cs, ep8_cs, ep9_cs, ep10_cs, ep11_cs, ep12_cs, ep13_cs,ep_dummy_cs} = 0;
+		{ep0_cs, ep0b_cs, ep1_cs, ep2_cs, ep3_cs, ep4_cs, ep5_cs, ep6_cs, ep7_cs, ep8_cs, ep9_cs, ep10_cs, ep11_cs, ep12_cs, ep13_cs,ep_dummy_cs,cp1_cs,cp2_cs,cp3_cs} = 0;
 
 
-		if     (ioctl_addr < 'h08000) ep0_cs = 1; // 0x8000 14   - Main CPU
+		if     (ioctl_addr < 'h04000) ep0_cs = 1; // 0x4000 13   - Main CPU
+		if     (ioctl_addr < 'h08000) ep0b_cs = 1;// 0x4000 13   - Main CPU
 		else if(ioctl_addr < 'h10000) ep1_cs = 1; // 0x8000 14   - Main CPU
 		else if(ioctl_addr < 'h12000) ep2_cs = 1; // 0x2000 14	- Audio CPU Program
 		else if(ioctl_addr < 'h14000) ep3_cs = 1; // 0x2000 12   - Foreground - Chars
@@ -60,8 +61,9 @@ module selector
 		else if(ioctl_addr < 'h50000) ep11_cs = 1; // 0x8000 14	- Sprites
 		else if(ioctl_addr < 'h58000) ep12_cs = 1; // 0x8000 14	- Sprites
 
-
-
+		else if(ioctl_addr < 'h58100) cp1_cs = 1; // 0x8000 14	- Colour Prom #1
+		else if(ioctl_addr < 'h58200) cp2_cs = 1; // 0x8000 14	- Colour Prom #2
+		else if(ioctl_addr < 'h58300) cp3_cs = 1; // 0x8000 14	- Colour Prom #3
 
 		else ep13_cs = 1; // 0x8000 14	- Background - Tiles
 
@@ -77,7 +79,7 @@ module eprom_0 //program
 	input logic        CLK,
 	input logic        CLK_DL,
 	input logic        CEN,
-	input logic [14:0] ADDR,
+	input logic [13:0] ADDR,
 	input logic [24:0] ADDR_DL,
 	input logic [7:0]  DATA_IN,
 	input logic        CS_DL,
@@ -85,13 +87,39 @@ module eprom_0 //program
 	output logic [7:0] DATA
 );
 
-	dpram_dc #(.widthad_a(15)) eprom_0
+	dpram_dc #(.widthad_a(14)) eprom_0
 	(
 		.clock_a(CLK),
-		.address_a(ADDR[14:0]),
+		.address_a(ADDR[13:0]),
 		.q_a(DATA),
 		.clock_b(CLK_DL),
-		.address_b(ADDR_DL[14:0]),
+		.address_b(ADDR_DL[13:0]),
+		.data_b(DATA_IN),
+		.wren_b(WR & CS_DL)
+	);
+endmodule
+
+
+module eprom_0b //program
+(
+	input logic        CLK,
+	input logic        CLK_DL,
+	input logic        CEN,
+	input logic [13:0] ADDR,
+	input logic [24:0] ADDR_DL,
+	input logic [7:0]  DATA_IN,
+	input logic        CS_DL,
+	input logic        WR,
+	output logic [7:0] DATA
+);
+
+	dpram_dc #(.widthad_a(14)) eprom_0b
+	(
+		.clock_a(CLK),
+		.address_a(ADDR[13:0]),
+		.q_a(DATA),
+		.clock_b(CLK_DL),
+		.address_b(ADDR_DL[13:0]),
 		.data_b(DATA_IN),
 		.wren_b(WR & CS_DL)
 	);
@@ -418,73 +446,73 @@ endmodule
 // PROMS //
 ///////////
 
-module color_prom_1
+module cprom_1
 (
 	input logic        CLK,
 	input logic        CLK_DL,
-	input logic [8:0]  ADDR,
+	input logic [7:0]  ADDR,
 	input logic [24:0] ADDR_DL,
 	input logic [7:0]  DATA_IN,
 	input logic        CS_DL,
 	input logic        WR,
 	output logic [3:0] DATA
 );
-	dpram_dc #(.widthad_a(9)) cprom_1
+	dpram_dc #(.widthad_a(8)) cprom_1
 	(
 		.clock_a(CLK),
 		.address_a(ADDR),
 		.q_a(DATA[3:0]),
 
 		.clock_b(CLK_DL),
-		.address_b(ADDR_DL[8:0]),
+		.address_b(ADDR_DL[7:0]),
 		.data_b(DATA_IN),
 		.wren_b(WR & CS_DL)
 	);
 endmodule
 
-module color_prom_2
+module cprom_2
 (
 	input logic        CLK,
 	input logic        CLK_DL,
-	input logic [8:0]  ADDR,
+	input logic [7:0]  ADDR,
 	input logic [24:0] ADDR_DL,
 	input logic [7:0]  DATA_IN,
 	input logic        CS_DL,
 	input logic        WR,
 	output logic [3:0] DATA
 );
-	dpram_dc #(.widthad_a(9)) cprom_2
+	dpram_dc #(.widthad_a(8)) cprom_2
 	(
 		.clock_a(CLK),
 		.address_a(ADDR),
 		.q_a(DATA[3:0]),
 
 		.clock_b(CLK_DL),
-		.address_b(ADDR_DL[8:0]),
+		.address_b(ADDR_DL[7:0]),
 		.data_b(DATA_IN),
 		.wren_b(WR & CS_DL)
 	);
 endmodule
 
-module color_prom_3
+module cprom_3
 (
 	input logic        CLK,
 	input logic        CLK_DL,
-	input logic [8:0]  ADDR,
+	input logic [7:0]  ADDR,
 	input logic [24:0] ADDR_DL,
 	input logic [7:0]  DATA_IN,
 	input logic        CS_DL,
 	input logic        WR,
 	output logic [3:0] DATA
 );
-	dpram_dc #(.widthad_a(9)) cprom_3
+	dpram_dc #(.widthad_a(8)) cprom_3
 	(
 		.clock_a(CLK),
 		.address_a(ADDR),
 		.q_a(DATA[3:0]),
 
 		.clock_b(CLK_DL),
-		.address_b(ADDR_DL[8:0]),
+		.address_b(ADDR_DL[7:0]),
 		.data_b(DATA_IN),
 		.wren_b(WR & CS_DL)
 	);

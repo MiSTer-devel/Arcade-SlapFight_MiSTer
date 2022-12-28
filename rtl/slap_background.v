@@ -1,6 +1,7 @@
 module background_layer (
 	input master_clk,
 	input pixel_clk,
+	input pcb,	
 	input [7:0] VPIXSCRL,
 	input [8:0] HPIXSCRL,
 	input SCREEN_FLIP,
@@ -110,9 +111,16 @@ bg_gfx_08 U6K_BG_A77_08
 
 */
 
+reg [14:0] BGROM_ADDR;
+
+always @(*) begin
+	BGROM_ADDR <= (pcb) ? 		 ({1'b0,BG_RAMD[10:0],VPIXSCRL[2:0]}) ://tiger heli or 16K BG ROMs
+										 ({BG_RAMD[11:0],VPIXSCRL[2:0]});       //slapfight or 32K BG ROMs	
+end
+
 eprom_5 U6P_BG_A77_05
 (
-	.ADDR({BG_RAMD[11:0],VPIXSCRL[2:0]}),//BG_RAMD[11:0]
+	.ADDR(BGROM_ADDR),//BG_RAMD[11:0]
 	.CLK(master_clk),//
 	.DATA(U6P_BG_A77_05_out),//
 	.ADDR_DL(dn_addr),
@@ -125,7 +133,7 @@ eprom_5 U6P_BG_A77_05
 
 eprom_6 U6N_BG_A77_06
 (
-	.ADDR({BG_RAMD[11:0],VPIXSCRL[2:0]}),//
+	.ADDR(BGROM_ADDR),//
 	.CLK(master_clk),//
 	.DATA(U6N_BG_A77_06_out),//
 	.ADDR_DL(dn_addr),
@@ -137,7 +145,7 @@ eprom_6 U6N_BG_A77_06
 
 eprom_7 U6M_BG_A77_07
 (
-	.ADDR({BG_RAMD[11:0],VPIXSCRL[2:0]}),//
+	.ADDR(BGROM_ADDR),//
 	.CLK(master_clk),//
 	.DATA(U6M_BG_A77_07_out),//
 	.ADDR_DL(dn_addr),
@@ -149,7 +157,7 @@ eprom_7 U6M_BG_A77_07
 
 eprom_8 U6K_BG_A77_08
 (
-	.ADDR({BG_RAMD[11:0],VPIXSCRL[2:0]}),//
+	.ADDR(BGROM_ADDR),//
 	.CLK(master_clk),//
 	.DATA(U6K_BG_A77_08_out),//
 	.ADDR_DL(dn_addr),

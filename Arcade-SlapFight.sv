@@ -183,7 +183,7 @@ assign FB_FORCE_BLANK = 0;
 wire [9:0] snd_right;
 wire [9:0] snd_left;
 
-assign AUDIO_S = 0;//signed for audio out
+assign AUDIO_S = 1;//signed for audio out
 assign AUDIO_MIX = 3;
 
 assign LED_DISK = 0;
@@ -227,52 +227,17 @@ wire [1:0] ar = status[20:19];
 
 assign VIDEO_ARX = (!ar) ? ((status[2])  ? 8'd4 : 8'd3) : (ar - 1'd1);
 assign VIDEO_ARY = (!ar) ? ((status[2])  ? 8'd3 : 8'd4) : 12'd0;
-//                          8   9   A   B   C   D   E   F
-//_________________________________________________________
-//	DIP SWITCH #1			  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
-//________________________|___|___|___|___|___|___|___|___|
-//								1 | ON| ON| ON|   |   |   |   |   |7
-//								2 |OFF| ON| ON|   |   |   |   |   |3
-//		  Number 			3 | ON|OFF| ON|   |   |   |   |   |5
-//			of					4 |OFF|OFF| ON|   |   |   |   |   |1
-//	SPACE FIGHTER			5 | ON| ON|OFF|   |   |   |   |   |6
-//								5 |OFF| ON|OFF|   |   |   |   |   |2
-//								5 | ON|OFF|OFF|   |   |   |   |   |4
-//					 Free Play |OFF|OFF|OFF|   |   |   |   |   |0
-//________________________|___|___|___|___|___|___|___|___|
-//			   |	10,000 pts |   |   |   | ON| ON|   |   |   |
-//		Bonus |	20,000 pts |   |   |   |OFF| ON|   |   |   |
-//		Score	|	30,000 pts |   |   |   | ON|OFF|   |   |   |
-//				|	40,000 pts |   |   |   |OFF|OFF|   |   |   |
-//________________________|___|___|___|___|___|___|___|___|
-//          |        EASY |   |   |   |   |   | ON| ON|   |
-//          |        Hard |   |   |   |   |   |OFF| ON|   |
-//Difficulty|      Harder |   |   |   |   |   | ON|OFF|   |
-//          |     Hardest |   |   |   |   |   |OFF|OFF|   |
-//________________________|___|___|___|___|___|___|___|___|
-//   Mode   |     Upright |   |   |   |   |   |   |   | ON|
-//          |     Table   |   |   |   |   |   |   |   |OFF|
-//________________________|___|___|___|___|___|___|___|___|
 
-//_________________________________________
-//	DIP SWITCH #2			  | 1 | 2 | 3 | 4 |
-//________________________|___|___|___|___|
-//		1 coin / 1 play	  | ON| ON| ON| N |
-//		1 coin / 2 play	  | ON|OFF| ON| O |
-//		1 coin / 3 play	  | ON| ON|OFF| T |
-//		1 coin / 4 play	  | ON|OFF|OFF|   |
-//		2 coin / 1 play	  |OFF| ON| ON| U |
-//		3 coin / 1 play	  |OFF|OFF| ON| S |
-//		4 coin / 1 play	  |OFF| ON|OFF| E |
-//		5 coin / 1 play	  |OFF|OFF|OFF| D |
-//________________________|___|___|___|___|
+reg mod_slap  = 0;
+reg mod_other = 0;
 
-// Status Bit Map:
-//              Upper                          Lower
-// 0         1         2         3          4         5         6
-// 01234567890123456789012345678901 23456789012345678901234567890123
-// 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-//    XXX  XXXXXXXXXXX
+always @(posedge clk_sys) begin
+	reg [7:0] mod = 0;
+	if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
+
+	mod_slap  <= (mod == 0);
+	mod_other <= (mod == 1);
+end
 
 `include "build_id.v"
 localparam CONF_STR = {
@@ -462,6 +427,7 @@ slapfight_fpga slapcore(
 	.clkm_36MHZ(clkm_36MHZ),
 	.clkf_cpu(clkc_12MHz),
 	.clkaudio(clk_3M),
+	.pcb(mod_other),
 	.RED(r),
 	.GREEN(g),
 	.BLUE(b),

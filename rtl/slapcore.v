@@ -16,6 +16,7 @@ module slapfight_fpga(
 	input clkm_36MHZ,
 	input	clkaudio,
 	input clkf_cpu,	
+	input pcb,	
 	output [3:0] RED,     	//from fpga core to sv
 	output [3:0] GREEN,		//from fpga core to sv
 	output [3:0] BLUE,		//from fpga core to sv
@@ -141,7 +142,7 @@ wire [3:0] U1J_sum,U2J_sum,U1H_sum;
 wire U1J_cout,U2J_cout,U1H_cout,CPU_RAM_SYNC,CPU_RAM_LBUF;
 reg IO2_SF;
 
-always @(posedge RESET_n) IO2_SF<=DIP1[6];	
+always @(posedge RESET_n) IO2_SF<=(pcb) ? DIP1[5] : DIP1[6];	
 
 always @(posedge H_SCRL_LO_SEL) begin 
 	HSCRL[7:0]<=Z80A_databus_out;		//U3J
@@ -256,6 +257,7 @@ foreground_layer slap_foreground(
 background_layer slap_background(
 	.master_clk(clkm_36MHZ),
 	.pixel_clk(pixel_clk),
+	.pcb(pcb),
 	.VPIXSCRL(VSCRL), //VSCRL
 	.HPIXSCRL(HPIXSCRL), //HPIXSCRL
 	.SCREEN_FLIP(IO2_SF),
@@ -443,9 +445,10 @@ wire RD_BUFFER_FULL_68705,WR_BUFFER_FULL_68705;
 always @(posedge maincpuclk_6M) begin
 
  
-		rZ80A_databus_in <=	(!(SEL_ROM0A&SEL_ROM0B)&!Z80_RD) 		? prom_prog1_out:  //&!Z80_RD implied
+		rZ80A_databus_in <=	(!(SEL_ROM0A)&!Z80_RD) 						? prom_prog1_out:  //&!Z80_RD implied
+									(!(SEL_ROM0B)&!Z80_RD)						? prom_prog1b_out:
 									(!SEL_ROM1&!Z80_RD) 							? prom_prog2_out: //&!Z80_RD implied
-									(!Z80M_IOREQ&!Z80_RD)						? {5'b00000,RD_BUFFER_FULL_68705,WR_BUFFER_FULL_68705,LINE_CLK2} :				//VBLANK
+									(!Z80M_IOREQ&!Z80_RD)						? {7'b0000000,LINE_CLK2} :				//VBLANK - Tiger Heli - RD_BUFFER_FULL_68705,WR_BUFFER_FULL_68705 removed from bit 1 & 2
 									(!SEL_Z80M_RAM&!Z80_RD)						? U8M_Z80M_RAM_out:
 									(!CHARAM&!Z80_RD) 							? FG_LO_out:
 									(!ATRRAM&!Z80_RD) 							? FG_HI_out:
@@ -460,7 +463,7 @@ end
 
 wire FG_WAIT,BG_WAIT;
 
-wire wait_n = !pause&AU_WAIT&FG_WAIT&BG_WAIT; //FG_WAIT& removed
+wire wait_n = !pause&AU_WAIT&((FG_WAIT&BG_WAIT)|pcb); //FG&BG wait when in 'Tiger Heli' mode
 
 wire SEL_EXT,SEL_ROM1,SEL_ROM0B,SEL_ROM0A;
 wire AU_RDY;
@@ -546,13 +549,25 @@ assign Z80A_databus_in = rZ80A_databus_in;
 //Z80A CPU main program program ROM #1
 eprom_0 U8N_A77_00
 (
-	.ADDR(Z80A_addrbus[14:0]),//
+	.ADDR(Z80A_addrbus[13:0]),//tiger heli rom size reduction
 	.CLK(clkm_36MHZ),//
 	.DATA(prom_prog1_out),//
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
 	.DATA_IN(dn_data),
 	.CS_DL(ep0_cs_i),
+	.WR(dn_wr)
+);
+
+eprom_0b U8N_A77_00b //tiger heli ROM addition
+(
+	.ADDR(Z80A_addrbus[13:0]),//
+	.CLK(clkm_36MHZ),//
+	.DATA(prom_prog1b_out),//
+	.ADDR_DL(dn_addr),
+	.CLK_DL(clkm_36MHZ),//
+	.DATA_IN(dn_data),
+	.CS_DL(ep0b_cs_i),
 	.WR(dn_wr)
 );
 
@@ -570,6 +585,7 @@ eprom_1 U8P_A77_01
 );
 
 wire [7:0] prom_prog1_out;
+wire [7:0] prom_prog1b_out; //additional ROM output register for TigerHeli
 wire [7:0] prom_prog2_out;
 wire [7:0] bg_prom_prog2_out;
 wire [7:0] U4N_Z80A_RAM_out;
@@ -629,7 +645,7 @@ wire AY12F_sample,AY12V_sample;
 wire [9:0] sound_outF;
 wire [9:0] sound_outV;
 
-always @(posedge clkaudio) begin
+always @(posedge aucpuclk_3M) begin
 	audio_l <= ({1'd0, sound_outF, 5'd0});
 	audio_r <= ({1'd0, sound_outV, 5'd0});
 end
@@ -721,8 +737,8 @@ wire m_coin   		= CONTROLS[8];
 
 jt49_bus AY_1_S2_U11G(
     .rst_n(AU_ENABLE),
-    .clk(clkaudio),    				// signal on positive edge 
-    .clk_en(1),  						/* synthesis direct_enable = 1 */
+    .clk(maincpuclk_6M),    				// signal on positive edge 
+    .clk_en(aucpuclk_3M),  						/* synthesis direct_enable = 1 */
     
     .bdir(AY_1_BDIR),						// bus control pins of original chip
     .bc1(AY_1_BC1),
@@ -743,8 +759,8 @@ jt49_bus AY_1_S2_U11G(
 
 jt49_bus AY_2_S2_11J(
     .rst_n(AU_ENABLE),
-    .clk(clkaudio),    				// signal on positive edge
-    .clk_en(1),  						/* synthesis direct_enable = 1 */
+    .clk(maincpuclk_6M),    				// signal on positive edge
+    .clk_en(aucpuclk_3M),  						/* synthesis direct_enable = 1 */
     
     .bdir(AY_2_BDIR),	 					// bus control pins of original chip
     .bc1(AY_2_BC1),
@@ -770,12 +786,13 @@ wire [3:0] U6_7D_out,U6D_out,U7D_out,U7E_out;
 
 //------------------------------------------------- MiSTer data write selector -------------------------------------------------//
 //Instantiate MiSTer data write selector to generate write enables for loading ROMs into the FPGA's BRAM
-wire ep0_cs_i, ep1_cs_i, ep2_cs_i, ep3_cs_i, ep4_cs_i, ep5_cs_i, ep6_cs_i, ep7_cs_i, ep8_cs_i,ep9_cs_i,ep10_cs_i,ep11_cs_i,ep12_cs_i,ep13_cs_i,ep_dummy_cs_i;
+wire ep0_cs_i, ep0b_cs_i, ep1_cs_i, ep2_cs_i, ep3_cs_i, ep4_cs_i, ep5_cs_i, ep6_cs_i, ep7_cs_i, ep8_cs_i,ep9_cs_i,ep10_cs_i,ep11_cs_i,ep12_cs_i,ep13_cs_i,ep_dummy_cs_i,cp1_cs_i,cp2_cs_i,cp3_cs_i;
 
 selector DLSEL
 (
 	.ioctl_addr(dn_addr),
 	.ep0_cs(ep0_cs_i),
+	.ep0b_cs(ep0b_cs_i), //addition for Tiger Heli
 	.ep1_cs(ep1_cs_i),
 	.ep2_cs(ep2_cs_i),
 	.ep3_cs(ep3_cs_i),
@@ -789,7 +806,10 @@ selector DLSEL
 	.ep11_cs(ep11_cs_i),
 	.ep12_cs(ep12_cs_i),
 	.ep13_cs(ep13_cs_i),
-	.ep_dummy_cs(ep_dummy_cs_i)
+	.ep_dummy_cs(ep_dummy_cs_i),
+	.cp1_cs(cp1_cs_i),
+	.cp2_cs(cp2_cs_i),
+	.cp3_cs(cp3_cs_i)	
 );
 
 
@@ -848,11 +868,12 @@ ls138x S2_U11E( //sf
 
 wire AUDIO_CPU_NMI;
 reg [13:0] U7A_TMR_out;
-reg AU_INT_ON=1'b1;
+reg AU_INT_ON=1'b0;
 wire nRST_AU=!AU_ENABLE|AU_INT_ON;
 
 
-always @(posedge AUD_INT_CLK or negedge RESET_n) AU_INT_ON<=(!RESET_n) ? 1'b1 : 1'b0;
+always @(posedge AUD_INT_CLK or negedge RESET_n) AU_INT_ON<=(!RESET_n) ? 1'b1 : 1'b0; //removed audio start logic
+//always @(posedge AUD_INT_CLK) AU_INT_ON<=1'b0; //removed audio start logic
 
 always @(negedge aucpuclk_3M) U7A_TMR_out <= (nRST_AU) ? 0 : U7A_TMR_out+1;
 assign AUDIO_CPU_NMI=!U7A_TMR_out[13];
@@ -870,23 +891,64 @@ always @(posedge pixel_clk) begin
 					  (SP_PX_D[0]|SP_PX_D[1]|SP_PX_D[2]|SP_PX_D[3])	? SP_PX_D : BG_PX_D;
 end
 
-ROM21 S2_U12Q(
+
+cprom_1 S2_U12Q  //Red Colour PROM
+(
+	.ADDR(COLOUR_REG),//
+	.CLK(clkm_36MHZ),//
+	.DATA(RED),//
+
+	.ADDR_DL(dn_addr),
+	.CLK_DL(clkm_36MHZ),//
+	.DATA_IN(dn_data),
+	.CS_DL(cp1_cs_i),
+	.WR(dn_wr)
+);
+
+cprom_2 S2_U12P  //Blue Colour PROM
+(
+	.ADDR(COLOUR_REG),//
+	.CLK(clkm_36MHZ),//
+	.DATA(BLUE),//
+
+	.ADDR_DL(dn_addr),
+	.CLK_DL(clkm_36MHZ),//
+	.DATA_IN(dn_data),
+	.CS_DL(cp2_cs_i),
+	.WR(dn_wr)
+);
+
+cprom_3 S2_U12N  //Green Colour PROM
+(
+	.ADDR(COLOUR_REG),//
+	.CLK(clkm_36MHZ),//
+	.DATA(GREEN),//
+
+	.ADDR_DL(dn_addr),
+	.CLK_DL(clkm_36MHZ),//
+	.DATA_IN(dn_data),
+	.CS_DL(cp3_cs_i),
+	.WR(dn_wr)
+);
+
+/*
+ROM_12Q S2_U12Q(
     .clk(clkm_36MHZ),
     .addr(COLOUR_REG),
     .data(RED)
 );
 
-ROM19 S2_U12P(
+ROM_12N S2_U12P(
     .clk(clkm_36MHZ),
     .addr(COLOUR_REG),
     .data(BLUE)
 );
 
-ROM20 S2_U12N(
+ROM_12M S2_U12N(
     .clk(clkm_36MHZ),
     .addr(COLOUR_REG),
     .data(GREEN)
-);
+);*/
 
 assign H_SYNC = LINE_CLK;
 assign V_SYNC = ROM15_out[0];

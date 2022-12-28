@@ -9,8 +9,6 @@ module foreground_layer (
 	input Z80_WR,
 	input Z80_RD,
 	input CPU_RAM_SYNC,
-	//input FG_S0,
-	//input FG_S1,
 	input [15:0] CPU_ADDR,
 	input  [7:0] CPU_DIN,
 

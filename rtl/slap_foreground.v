@@ -52,7 +52,7 @@ assign HPIX_LT_out	= HPIX_LT;
 	dpram_dc #(.widthad_a(11)) FG_U4G 
 	(
 		.clock_a(master_clk),
-		.address_a({VPIX[7:3],HPIX_LT[8:3]}),	//{VPIX[7:3],HPIX_LT[8:3]}
+		.address_a({VPIX[7:3],HPIX_LT[8:3]}),
 		.data_a(CPU_DIN),  							//Z80A_databus_out
 		.wren_a(1'b0),
 		.q_a(FG_RAMD[15:8]),
@@ -67,7 +67,7 @@ assign HPIX_LT_out	= HPIX_LT;
 	dpram_dc #(.widthad_a(11)) FG_U4F 
 	(
 		.clock_a(master_clk),
-		.address_a({VPIX[7:3],HPIX_LT[8:3]}), //{VPIX[7:3],HPIX_LT[8:3]}
+		.address_a({VPIX[7:3],HPIX_LT[8:3]}),
 		.data_a(CPU_DIN),
 		.wren_a(1'b0),
 		.q_a(FG_RAMD[7:0]),
@@ -131,8 +131,6 @@ assign HPIX_LT_out	= HPIX_LT;
 		.QA(U7G_QA),
 		.QH(U7G_QH)
 	);
-
-
 
 	always @(*) begin //posedge pixel_clk
 		FG_PX_D[0] <= (SCREEN_FLIP) ?   U7G_QA : U7G_QH;

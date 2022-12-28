@@ -91,19 +91,6 @@ ttl_7474 #(.BLOCKS(1), .DELAY_RISE(0), .DELAY_FALL(0)) U9H_A(
 	.n_q(Z80M_INT)
 );
 
-//assign VSCRL=VPIX+VSCRL_sum_in;
-//reg [WIDTH-1:0] Sum_computed;
-//reg C_computed;
-
-//assign  
-
-/*always @(*)
-begin
-  {U8E_cout, VSCRL[3:0]} = {1'b0, VPIX[3:0]} + {1'b0, VSCRL_sum_in[3:0]} + 1'b0;
-  {U9E_cout, VSCRL[7:4]} = {1'b0, VPIX[7:4]} + {1'b0, VSCRL_sum_in[7:4]} + U8E_cout;
-end*/
-
-
 ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U9E(
 	.a(VPIX[3:0]),
 	.b(VSCRL_sum_in[3:0]),
@@ -151,13 +138,15 @@ end
 always @(posedge H_SCRL_HI_SEL) HSCRL[8]<=Z80A_databus_out[0];		//U1G_A
 always @(posedge pixel_clk) HPIXSCRL[8:0]<={U1H_sum[0],U2J_sum,U1J_sum}; //U2H & U1C bit 0
 
-wire U1L_A,U1L_D,BG_SEL,U1K_B,BG_S1,BG_S0,U7B_D,U7C_C,U4B_D;
 
 
+wire U7B_D,U7C_C,U4B_D;
+/* REMOVE NEXT CLEAN UP
+wire U1L_A,U1L_D,BG_SEL,U1K_B,BG_S1,BG_S0;
 assign BG_SEL=!IO2_SF^!HPIXSCRL[2];
 assign U1L_D= !IO2_SF^!HPIXSCRL[0];
 assign U1L_A= !IO2_SF^HPIXSCRL[1];
-
+*/
 //assign U1K_B=!(U1L_A&U1L_D&BG_SEL);
 
 
@@ -258,8 +247,8 @@ background_layer slap_background(
 	.master_clk(clkm_36MHZ),
 	.pixel_clk(pixel_clk),
 	.pcb(pcb),
-	.VPIXSCRL(VSCRL), //VSCRL
-	.HPIXSCRL(HPIXSCRL), //HPIXSCRL
+	.VPIXSCRL(VSCRL),
+	.HPIXSCRL(HPIXSCRL),
 	.SCREEN_FLIP(IO2_SF),
 	.BACKGRAM_1(BACKGRAM_1),
 	.BACKGRAM_2(BACKGRAM_2),
@@ -315,35 +304,6 @@ wire [7:0] FG_LO_out;
 wire [7:0] BG_HI_out;
 wire [7:0] BG_LO_out;
 wire [7:0] SP_RAMD_out;
-
-//unused sprite variables
-//wire SP_RAM_nOE=SP_RAMA[11];
-//wire SPRITE_RAM_SELECT=!CPU_RAM_SELECT;
-
-//assign SP_RAMA = (SPRITE_RAM_SELECT) ? SPR_CNT :{Z80_WR,Z80A_addrbus[10:0]};
-
-
-//SPRITE RAM
-//m2016_ram SP_U2L(					//U4P
-//	.data(Z80A_databus_out), 	//
-//	.addr(SP_RAMA[10:0]),    	//
-//	.nOE(SP_RAM_nOE),						//FG_RAM_nOE
-//	.nCS(1'b0),						//FG_RAM_U4F_nCS
-//	.clk(clkm_36MHZ),				//
-//	.nWE(SPRITE_RAM|Z80_WR|CPU_RAM_SELECT),							//FG_RAM_WE|U6J_nCE
-//	.q(SP_RAMD)				//
-//);
-
-
-//this is probably not needed, but its here for testing for now
-//always @(posedge pixel_clk) begin
- //FG_RAMD[7:0] <= 	(!U6J_nCE&!FG_RAM_nWE)    	? Z80A_databus_out : FG_RAMD_out[7:0];
-						//
- //FG_RAMD[15:8] <= (!FG_RAM_nOE) 					? FG_RAMD_out[15:8] : 
-						//(!U4J_nCE&!FG_RAM_nWE)    	? Z80A_databus_out : 8'b00000000;
-//end
-
-// FOREGROUND LAYER
 
 //SLAPFIGHT CLOCKS
 reg clk_12M, maincpuclk_6M, aucpuclk_3M, ayclk_1p5M;
@@ -460,6 +420,7 @@ always @(posedge maincpuclk_6M) begin
 
 end
 
+assign Z80A_databus_in = rZ80A_databus_in;
 
 wire FG_WAIT,BG_WAIT;
 
@@ -498,13 +459,6 @@ ls139x U9P_A(  //sf
 	.Y({MCU_PORT_WR,V_SCRL_SEL,H_SCRL_HI_SEL,H_SCRL_LO_SEL})
 );
 
-//ls139 U9P_A(  //sf
-//	.a(Z80A_addrbus[0]),
-//	.b(Z80A_addrbus[1]),
-//	.n_g(SEL_MCU_PORT|Z80_WR),
-//	.y({MCU_PORT_WR,V_SCRL_SEL,H_SCRL_HI_SEL,H_SCRL_LO_SEL})
-//);
-
 wire ATRRAM,CHARAM,SEL_MCU_PORT,SPRITE_RAM,BACKGRAM_2,BACKGRAM_1,AUDIO_CPU_PORT,SEL_Z80M_RAM;
 ls138x U9K( //sf
   .nE1(SEL_EXT),
@@ -541,10 +495,6 @@ dpram_dc #(.widthad_a(11)) U8M_Z80M_RAM //sf
 	.wren_b(hs_write),
 	.q_b(hs_data_out)
 );
-
-
-
-assign Z80A_databus_in = rZ80A_databus_in;
 
 //Z80A CPU main program program ROM #1
 eprom_0 U8N_A77_00
@@ -592,12 +542,7 @@ wire [7:0] U4N_Z80A_RAM_out;
 wire [7:0] U4V_Z80B_RAM_out;
 
 wire CPU_RAM_SELECT;
-
-
-//U4Q
 wire U4Q_BG_WR,U4Q_BG_RD,U4Q_BACKRAM_1,U4Q_BACKRAM_2;
-
-
 wire [7:0] SF2_U11B_out;
 
 			 
@@ -605,15 +550,8 @@ wire [7:0] SF2_U11B_out;
 
 // *************** SOUND CHIPS *****************
 
-wire [7:0] AY_12V_ioa_in;
-wire [7:0] AY_12V_ioa_out;
-wire [7:0] AY_12V_iob_in;
-wire [7:0] AY_12V_iob_out;
-
 wire [7:0] AY_1_databus_out;
 wire [7:0] AY_2_databus_out;
-
-
 wire U4B_B=SEL_MCU_PORT|Z80_RD;
 wire U9A_SF_B=RESET_68705&U4B_B;
 
@@ -680,14 +618,11 @@ T80pa Z80B(
 	.BUSAK_n(AUDIO_CPU_BUSACK)
 );
 
-
-
 wire [7:0] AUDIO_RAM_out;
 wire [7:0] AUDIO_RAMM_out;
 
 wire AUDIOM_OK=AUDIO_CPU_PORT|AUDIO_CPU_BUSACK;
 assign AUA = (AUDIOM_OK) ? CPU_AUA : Z80A_addrbus;  //when main CPU has control of the bus switch the address lines to the main CPU
-//wire AY_data_in  = (AUDIOM_OK) ? AUD_out : Z80A_databus_out;
 
 //Audio CPU (Z80AU) work RAM - dual port RAM to main CPU (alternative configuration)
 dpram_dc #(.widthad_a(11)) S2_U11B //sf
@@ -732,9 +667,6 @@ wire m_start1p  	= CONTROLS[6];
 wire m_start2p  	= CONTROLS[7];
 wire m_coin   		= CONTROLS[8];
 
-
-
-
 jt49_bus AY_1_S2_U11G(
     .rst_n(AU_ENABLE),
     .clk(maincpuclk_6M),    				// signal on positive edge 
@@ -744,17 +676,17 @@ jt49_bus AY_1_S2_U11G(
     .bc1(AY_1_BC1),
 	 //.bc2(AY_1_BC2),
 	 .din(AUD_out),
-    .sel(1'b0), 						// if sel is low, the clock is divided by 2
+    .sel(1'b0), 								// if sel is low, the clock is divided by 2
     .dout(AY_1_databus_out),
     
-	 .sound(sound_outF),  			// combined channel output
-    .A(ay12F_araw),    				// linearised channel output
+	 .sound(sound_outF),  					// combined channel output
+    .A(ay12F_araw),    						// linearised channel output
     .B(ay12F_braw),
     .C(ay12F_craw),
     .sample(AY12F_sample),
 
-    .IOA_in(DIP1),					//Dip Switch #1
-    .IOB_in(DIP2)					//Dip Switch #2
+    .IOA_in(DIP1),							//Dip Switch #1
+    .IOB_in(DIP2)								//Dip Switch #2
 );
 
 jt49_bus AY_2_S2_11J(
@@ -766,11 +698,11 @@ jt49_bus AY_2_S2_11J(
     .bc1(AY_2_BC1),
 	 //.bc2(AY_2_BC2),
 	 .din(AUD_out),
-    .sel(1'b0), 						// if sel is low, the clock is divided by 2
+    .sel(1'b0), 								// if sel is low, the clock is divided by 2
     .dout(AY_2_databus_out),
     
-	 .sound(sound_outV),  			// combined channel output
-    .A(ay12V_araw),      			// linearised channel output
+	 .sound(sound_outV),  					// combined channel output
+    .A(ay12V_araw),      					// linearised channel output
     .B(ay12V_braw),
     .C(ay12V_craw),
     .sample(AY12V_sample),
@@ -781,8 +713,6 @@ jt49_bus AY_2_S2_11J(
 );
 
 wire [3:0] U6_7D_out,U6D_out,U7D_out,U7E_out;
-
-
 
 //------------------------------------------------- MiSTer data write selector -------------------------------------------------//
 //Instantiate MiSTer data write selector to generate write enables for loading ROMs into the FPGA's BRAM
@@ -814,40 +744,24 @@ selector DLSEL
 
 
 wire [15:0] BG_RAMD;
-
 wire [18:0] FG_ROM_ADDR;
-
-
-//CPU_
-
-//assign FG_ROM_ADDR=(FG_RAM_BUF_SEL) ? ({FG_RAMD[15:0],VPIX[2:0]}) : ({16'b0,VPIX[2:0]});
-//assign FG_ROM_ADDR=({FG_RAMD[15:0],VPIX[2:0]});
-
-
-
-
-
-
-
-
-
-wire [7:0] S2_U12D_AU_A77_02_out;
+wire [7:0]  S2_U12D_AU_A77_02_out;
 
 eprom_2 S2_U12D_AU_A77_02  //Audio Program ROM
 (
-	.ADDR(CPU_AUA[12:0]),//
-	.CLK(clkm_36MHZ),//
-	.DATA(S2_U12D_AU_A77_02_out),//
+	.ADDR(CPU_AUA[12:0]),
+	.CLK(clkm_36MHZ),
+	.DATA(S2_U12D_AU_A77_02_out),
 
 	.ADDR_DL(dn_addr),
-	.CLK_DL(clkm_36MHZ),//
+	.CLK_DL(clkm_36MHZ),
 	.DATA_IN(dn_data),
 	.CS_DL(ep2_cs_i),
 	.WR(dn_wr)
 );
 
 wire S2_U11D_Q7,AU_RAM_CS,AU_IO,S2_U11D_Q4,S2_U11D_Q3,S2_U11D_Q2,S2_U11D_Q1,AU_ROM_CS;
-ls138x S2_U11D( //sf
+ls138x S2_U11D(
   .nE1(1'b0),
   .nE2(1'b0),
   .E3(PUR),
@@ -858,7 +772,7 @@ ls138x S2_U11D( //sf
 wire COMB_AUIMREQ=(AUDIOM_OK|AU_RDY2) ? AUIMREQ:Z80M_IOREQ;
 
 wire AUD_INT_CLK,AUD_INT_SET,S2_U11E_Q5,S2_U11E_Q4,S2_U11E_Q3,S2_U11E_Q2,AY_1_SEL,AY_2_SEL;
-ls138x S2_U11E( //sf
+ls138x S2_U11E(
   .nE1(COMB_AUIMREQ),
   .nE2(AU_IO),
   .E3(AUA[7]),
@@ -871,16 +785,13 @@ reg [13:0] U7A_TMR_out;
 reg AU_INT_ON=1'b0;
 wire nRST_AU=!AU_ENABLE|AU_INT_ON;
 
-
-always @(posedge AUD_INT_CLK or negedge RESET_n) AU_INT_ON<=(!RESET_n) ? 1'b1 : 1'b0; //removed audio start logic
-//always @(posedge AUD_INT_CLK) AU_INT_ON<=1'b0; //removed audio start logic
-
+always @(posedge AUD_INT_CLK or negedge RESET_n) AU_INT_ON<=(!RESET_n) ? 1'b1 : 1'b0; //Initialize audio interrupt
 always @(negedge aucpuclk_3M) U7A_TMR_out <= (nRST_AU) ? 0 : U7A_TMR_out+1;
-assign AUDIO_CPU_NMI= (pcb) ? !U7A_TMR_out[12] : !U7A_TMR_out[13];
 
+assign AUDIO_CPU_NMI= (pcb) ? !U7A_TMR_out[12] : !U7A_TMR_out[13]; //change interrupt timing for Tiger Heli board 
 
-//  ****** FINAL 12-BIT ANALOGUE OUTPUT ********
-//  MIXER NOT DEFINED YET.  ONLY USING FG OUTPUT
+//  **** FINAL 12-BIT ANALOGUE OUTPUT ******
+//  PRIORTY: FOREGROUND->SPRITES->BACKGROUND
 
 wire [7:0] SP_PX_D;
 wire [7:0] BG_PX_D;
@@ -891,15 +802,13 @@ always @(posedge pixel_clk) begin
 					  (SP_PX_D[0]|SP_PX_D[1]|SP_PX_D[2]|SP_PX_D[3])	? SP_PX_D : BG_PX_D;
 end
 
-wire [7:0] r;
-wire [7:0] b;
-wire [7:0] g;
+
 
 cprom_1 S2_U12Q  //Red Colour PROM
 (
 	.ADDR(COLOUR_REG),//
 	.CLK(clkm_36MHZ),//
-	.DATA(r),//
+	.DATA(RED),//
 
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
@@ -912,7 +821,7 @@ cprom_2 S2_U12P  //Blue Colour PROM
 (
 	.ADDR(COLOUR_REG),//
 	.CLK(clkm_36MHZ),//
-	.DATA(b),//
+	.DATA(BLUE),//
 
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
@@ -925,7 +834,7 @@ cprom_3 S2_U12N  //Green Colour PROM
 (
 	.ADDR(COLOUR_REG),//
 	.CLK(clkm_36MHZ),//
-	.DATA(g),//
+	.DATA(GREEN),//
 
 	.ADDR_DL(dn_addr),
 	.CLK_DL(clkm_36MHZ),//
@@ -934,43 +843,9 @@ cprom_3 S2_U12N  //Green Colour PROM
 	.WR(dn_wr)
 );
 
-/*
-ROM_12Q S2_U12Q(
-    .clk(clkm_36MHZ),
-    .addr(COLOUR_REG),
-    .data(RED)
-);
-
-ROM_12N S2_U12P(
-    .clk(clkm_36MHZ),
-    .addr(COLOUR_REG),
-    .data(BLUE)
-);
-
-ROM_12M S2_U12N(
-    .clk(clkm_36MHZ),
-    .addr(COLOUR_REG),
-    .data(GREEN)
-);*/
-
-reg hide;
-always @(posedge pixel_clk) begin
-	hide = (HPIX >= 284);
-end
-
-assign RED = hide ? 4'h0 : r;
-assign BLUE = hide ? 4'h0 : b;
-assign GREEN = hide ? 4'h0 : g;
-
 assign H_SYNC = LINE_CLK;
 assign V_SYNC = ROM15_out[0];
-assign H_BLANK =  U1C_Q[3];
+assign H_BLANK =  U1C_Q[3] | ((IO2_SF) ? HPIX>284 : HPIX<12) ;
 assign V_BLANK = LINE_CLK2;
-
-//assign H_SYNC = HPIX<2;
-//assign V_SYNC = VPIX<2 ;
-
-//assign H_BLANK =  VPIX<16 || VPIX>240 ;
-//assign V_BLANK =  HPIX<96 || HPIX>420;
 
 endmodule

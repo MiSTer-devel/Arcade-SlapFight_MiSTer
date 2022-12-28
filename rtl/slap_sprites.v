@@ -13,8 +13,6 @@ module sprite_layer (
 	input CPU_RAM_SYNC,
 	input CPU_RAM_SELECT,
 	input CPU_RAM_LBUF,
-	//input FG_S0,
-	//input FG_S1,
 	input [15:0] CPU_ADDR,
 	input  [7:0] CPU_DIN,
 
@@ -91,13 +89,10 @@ wire RESET_LD_CTR=!S2_U4A_out[3];
 
 //*********START: register latches **************
 reg [7:0] SPR_ROM1617_ADDR;
-//reg [3:0] SPR_ROM_ADDR_H;
+
 wire SPR_ROM_ADDR_RST=RST_REG_CTR|SPR_CPU_RAM_SELECT; //S2_U4C_D
 
 always @(posedge npixel_clk or posedge SPR_ROM_ADDR_RST) SPR_ROM1617_ADDR <= (SPR_ROM_ADDR_RST) ? 0 : SPR_ROM1617_ADDR+1; //clear on RST going high, may not be clocked - observe behaviour
-
-//always @(posedge SPR_ROM_ADDR_L[3]) SPR_ROM_ADDR_H <= (SPR_ROM_ADDR_RST) ? 0 : SPR_ROM_ADDR_L+1; //clear on RST going high, may not be clocked - observe behaviour
-
 
 wire [7:0] ROM17_out;
 wire [7:0] ROM16_out;
@@ -200,21 +195,10 @@ ls74 S2_U7B //not used
 	.n_q2(S2_U7BB_nQ)
 );
 
-/*
-always @(negedge S2_U1G_10 or negedge S2_U1G_9) begin  //S2_U7B_A
-	S2_U7BA_Q <= (!S2_U1G_10) ? 1 :
-					 (!S2_U1G_9)  ? 0 : S2_U7BA_Q;
-end
-*/
-//S2_U7B_B
 wire S2_U9B_D = SPR32_CLK|!(SPR_VPIX_CNT[0]&SPR_VPIX_CNT[1]&SPR_VPIX_CNT[2]&SPR_VPIX_CNT[3]);
 
 wire S2_U7BB_Q;
 wire S2_U7BB_nQ;// = !S2_U7BB_Q;
-/*
-always @(posedge S2_U9B_D or negedge S2_U7BA_nQ) begin
-	S2_U7BB_Q <= (!S2_U7BA_nQ) ? 1 : 0;
-end*/
 
 always @(posedge SPR32_CLK) begin
 	SPR_VPIX_CNT <= (!S2_U7B_AnQ) ? 0 				: (S2_U7BB_Q) ? SPR_VPIX_CNT+1 : SPR_VPIX_CNT; //S2_U7C
@@ -385,36 +369,7 @@ eprom_12 SP_12
 	.CS_DL(ep12_cs_i),
 	.WR(dn_wr)
 );
-/*
-//SPRITE ROMS
-sp_gfx_09 SP_09
-(
-	.clk(master_clk),
-	.addr(SPROM_ADDR),
-	.data(SP_09_out)
-);
 
-sp_gfx_10 SP_10
-(
-	.clk(master_clk),
-	.addr(SPROM_ADDR),
-	.data(SP_10_out)
-);
-
-sp_gfx_11 SP_11
-(
-	.clk(master_clk),
-	.addr(SPROM_ADDR),
-	.data(SP_11_out)
-);
-
-sp_gfx_12 SP_12
-(
-	.clk(master_clk),
-	.addr(SPROM_ADDR),
-	.data(SP_12_out)
-);
-*/
 wire SPR_PIX_A,SPR_PIX_B,SPR_PIX_C,SPR_PIX_D;
 
 ls166 S2_U7G(
@@ -486,8 +441,6 @@ reg [7:0] SP_PX_D;
 
 wire S2_U5A_D=SPR_LB_LD&S2_U4A_11;
 
-//assign LNBF_CNTnext=(!S2_U5A_D) ? LNBF_CNT-1 : LNBF_CNT;
-
 always @(posedge pixel_clk) LNBF_CNT <= (!SPR_LB_LD) ? ({SPR_EXTRA_out[0],SPR_HPOS_out}) : 
 													 (!S2_U5A_D) ? LNBF_CNT-1 : LNBF_CNT; //S2_U1M,U2M & U3M
 
@@ -497,7 +450,6 @@ assign LINEBUF_A_A = (CPU_RAM_LBUF) ? 0 :
 assign LINEBUF_B_A = (CPU_RAM_LBUF) ? 0 :
 							  (!SPR_LINEB) ? HPIX_LT : LNBF_CNT; //S2_U2T, U4T
 							  
-//always @(posedge SPR_ROM_LD) SP_PX_SEL_D <= SP_PX_D[3:0]; //S2_U5L
 always @(posedge SPR_ROM_LD) SP_PX_SEL_D <= SPR_EXTRA_out[4:1]; //S2_U5L
 
 assign LINEBUF_A_D_in={SPR_LINEA_PIX_D,SPR_LINEA_PIX_B,SPR_LINEA_PIX_C,SPR_LINEA_PIX_A,SP_PX_SEL_D}; //S2_U7P

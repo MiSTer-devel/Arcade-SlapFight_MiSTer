@@ -27,12 +27,6 @@ module background_layer (
 
 wire [15:0] BG_RAMD;
 reg [7:0] BG_PX_D;
-
-//reg [11:0] tilecnt;
-//reg [3:0] pause_cnt;
-
-//always @(posedge VPIXSCRL[7]) pause_cnt <= pause_cnt +1;
-//always @(posedge pause_cnt[3]) tilecnt <= tilecnt +1;
 	
 	wire SH_REG_DIR=!SCREEN_FLIP;
 	wire BG_CLK=(SCREEN_FLIP^!HPIXSCRL[2]);
@@ -79,37 +73,6 @@ wire [7:0] U6N_BG_A77_06_out;
 wire [7:0] U6M_BG_A77_07_out;
 wire [7:0] U6K_BG_A77_08_out; //eprom data output
 
-/* - COMMENTED OUT TO SAVE MEMORY, WILL NEED TO SWITCH TO A DIFFERENT MODEL*/
-/*
-bg_gfx_05 U6P_BG_A77_05
-(
-	.clk(master_clk),
-	.addr({BG_RAMD[11:0],VPIXSCRL[2:0]}),
-	.data(U6P_BG_A77_05_out)
-);
-
-bg_gfx_06 U6N_BG_A77_06
-(
-	.clk(master_clk),
-	.addr({BG_RAMD[11:0],VPIXSCRL[2:0]}),
-	.data(U6N_BG_A77_06_out)
-);
-
-bg_gfx_07 U6M_BG_A77_07
-(
-	.clk(master_clk),
-	.addr({BG_RAMD[11:0],VPIXSCRL[2:0]}),
-	.data(U6M_BG_A77_07_out)
-);
-
-bg_gfx_08 U6K_BG_A77_08
-(
-	.clk(master_clk),
-	.addr({BG_RAMD[11:0],VPIXSCRL[2:0]}),
-	.data(U6K_BG_A77_08_out)
-);
-
-*/
 
 reg [14:0] BGROM_ADDR;
 

@@ -314,7 +314,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 wire clkm_36MHZ,clkc_12MHz;
 wire clk_3M;
 wire clk_sys=clkm_36MHZ;
-wire clk_vid;//=clkm_20MHZ;
+wire clk_vid;
 reg ce_pix;
 
 pll pll(
@@ -352,7 +352,6 @@ wire hs, vs;
 wire [3:0] r;
 wire [3:0] g;
 wire [3:0] b;
-//wire [7:0] rgb = {r[2:0],g[2:0],b[1:0]};//23:0
 wire [11:0] rgb = {rgb_out[11:8],rgb_out[7:4],rgb_out[3:0]};//23:0
 
 wire no_rotate = status[2] | direct_video;
@@ -438,7 +437,7 @@ slapfight_fpga slapcore(
 	.RESET_n(~reset),
 	.pause(pause_cpu),
 	.CONTROLS(~{m_coin,m_start2p,m_start1p,m_shoot2,m_shoot,m_up,m_down,m_left,m_right}),
-	.DIP1(sw[1]), //dip switch #1 - filter out table option
+	.DIP1(sw[1]), 
 	.DIP2(sw[2]),
 	.dn_addr(ioctl_addr),
 	.dn_data(ioctl_dout),

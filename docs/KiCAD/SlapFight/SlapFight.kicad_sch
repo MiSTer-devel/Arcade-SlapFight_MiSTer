@@ -422,6 +422,9 @@
     (path "/28c0bf6a-da01-4e20-abdc-b8e8085666fd/7396cc11-8504-4833-9117-e3e2023cdae7"
       (reference "#PWR?") (unit 1) (value "GNDPWR") (footprint "")
     )
+    (path "/f2c1a47c-9bee-46cc-9932-9dac713863c7/74ab40d6-ad15-4f3e-ae1b-0230de7ac930"
+      (reference "#PWR?") (unit 1) (value "GNDPWR") (footprint "")
+    )
     (path "/f0f5f800-a0ab-4225-bbe5-02dc472db5ae/75ce7841-028e-4bfe-a5ae-e5f953c75fc0"
       (reference "#PWR?") (unit 1) (value "VCC") (footprint "")
     )

@@ -183,8 +183,8 @@ assign FB_FORCE_BLANK = 0;
 wire [9:0] snd_right;
 wire [9:0] snd_left;
 
-assign AUDIO_S = 1;//signed for audio out
-assign AUDIO_MIX = 3;
+assign AUDIO_S = 0;//signed for audio out
+assign AUDIO_MIX = 0;
 
 assign LED_DISK = 0;
 assign LED_POWER = 0;
@@ -360,7 +360,7 @@ wire flip = 0;
 
 screen_rotate screen_rotate (.*);
 
-arcade_video #(388,12) arcade_video //  12 : 4R 4G 4B
+arcade_video #(288,12) arcade_video //  12 : 4R 4G 4B
 (
 	.*,
 	.clk_video(clk_vid),

@@ -32,8 +32,8 @@ module slapfight_fpga(
 	input [24:0] dn_addr,
 	input 		 dn_wr,
 	input [7:0]  dn_data,
-	output reg [15:0] audio_l, //from jt49_1 .sound
-	output reg [15:0] audio_r,  //from jt49_2 .sound
+	output [15:0] audio_l, //from jt49_1 .sound
+	output [15:0] audio_r,  //from jt49_2 .sound
 	input [15:0] hs_address,
 	output [7:0] hs_data_out,
 	input [7:0] hs_data_in,
@@ -71,9 +71,10 @@ ROM15 U8B_ROM15(
 wire U9E_cout;
 wire U8E_cout;
 
-always @(posedge V_SCRL_SEL) VSCRL_sum_in<=Z80A_databus_out;
+always @(posedge V_SCRL_SEL) VSCRL_sum_in<=(pcb) ? ({Z80A_databus_out[7:4],!IO2_SF,!IO2_SF,!IO2_SF,!IO2_SF}) : Z80A_databus_out; //AY1_IOB_in[7:5]
 always @(posedge H_SYNC) LINE_CLK2<=ROM15_out[1];
 
+//(pcb) ? 0 : 
 
 //always @(negedge CPU_RAM_SELECT) Z80M_INT=INT_ENABLE;
 
@@ -234,6 +235,7 @@ background_layer slap_background(
 	.master_clk(clkm_36MHZ),
 	.pixel_clk(pixel_clk),
 	.pcb(pcb),
+	.VPIX(VPIX),	
 	.VPIXSCRL(VSCRL),
 	.HPIXSCRL(HPIXSCRL),
 	.SCREEN_FLIP(IO2_SF),
@@ -556,10 +558,10 @@ wire AY12F_sample,AY12V_sample;
 wire [9:0] sound_outF;
 wire [9:0] sound_outV;
 
-always @(posedge aucpuclk_3M) begin
-	audio_l <= ({1'd0, sound_outF, 5'd0});
-	audio_r <= ({1'd0, sound_outV, 5'd0});
-end
+//always @(posedge clkm_36MHZ) begin
+assign	audio_l = ({1'd0, sound_outF, 5'd0});
+assign	audio_r = ({1'd0, sound_outV, 5'd0});
+//end
 
 // *************** SECOND CPU IC SELECTION LOGIC FOR AUDIO *****************
 //always @(posedge aucpuclk_3M) begin
@@ -642,7 +644,7 @@ wire m_coin   		= CONTROLS[8];
 
 reg [7:0] AY1_IOA_in,AY1_IOB_in,AY2_IOA_in,AY2_IOB_in;
 
-always @(posedge ayclk_1p5M) begin
+always @(*) begin
 	AY1_IOA_in<=DIP1;
 	AY1_IOB_in<=DIP2;
 	AY2_IOA_in<=({4'b1111,m_left,m_right,m_down,m_up});
@@ -651,8 +653,8 @@ end
 
 jt49_bus AY_1_S2_U11G(
     .rst_n(AU_ENABLE),
-    .clk(maincpuclk_6M),    				// signal on positive edge 
-    .clk_en(aucpuclk_3M),  						/* synthesis direct_enable = 1 */
+    .clk(clkaudio),    				// signal on positive edge 
+    .clk_en(1),  						/* synthesis direct_enable = 1 ayclk_1p5M*/
     
     .bdir(AY_1_BDIR),						// bus control pins of original chip
     .bc1(AY_1_BC1),
@@ -673,8 +675,8 @@ jt49_bus AY_1_S2_U11G(
 
 jt49_bus AY_2_S2_11J(
     .rst_n(AU_ENABLE),
-    .clk(maincpuclk_6M),    				// signal on positive edge
-    .clk_en(aucpuclk_3M),  						/* synthesis direct_enable = 1 */
+    .clk(clkaudio),    				// signal on positive edge
+    .clk_en(1),  						/* synthesis direct_enable = 1 */
     
     .bdir(AY_2_BDIR),	 					// bus control pins of original chip
     .bc1(AY_2_BC1),
@@ -762,15 +764,15 @@ ls138x S2_U11E(
   .Y({AUD_INT_CLK,AUD_INT_SET,S2_U11E_Q5,S2_U11E_Q4,S2_U11E_Q3,S2_U11E_Q2,AY_1_SEL,AY_2_SEL})
 );
 
-wire AUDIO_CPU_NMI;
+reg AUDIO_CPU_NMI;
 reg [13:0] U7A_TMR_out;
 reg AU_INT_ON=1'b0;
-wire nRST_AU=!AU_ENABLE|AU_INT_ON;
+wire nRST_AU=!AU_ENABLE|AU_INT_ON|!RESET_n;
 
 always @(posedge AUD_INT_CLK or negedge RESET_n) AU_INT_ON<=(!RESET_n) ? 1'b1 : 1'b0; //Initialize audio interrupt
-always @(negedge aucpuclk_3M) U7A_TMR_out <= (nRST_AU) ? 0 : U7A_TMR_out+1;
+always @(posedge aucpuclk_3M or posedge nRST_AU) U7A_TMR_out <= (nRST_AU) ? 0 : U7A_TMR_out+1;
 
-assign AUDIO_CPU_NMI= (pcb) ? !U7A_TMR_out[12] : !U7A_TMR_out[13]; //change interrupt timing for Tiger Heli board 
+always @(*) AUDIO_CPU_NMI<= (pcb) ? !U7A_TMR_out[12] : !U7A_TMR_out[13]; //change interrupt timing for Tiger Heli board 
 
 //  **** FINAL 12-BIT ANALOGUE OUTPUT ******
 //  PRIORTY: FOREGROUND->SPRITES->BACKGROUND

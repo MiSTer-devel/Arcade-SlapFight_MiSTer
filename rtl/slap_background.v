@@ -2,6 +2,7 @@ module background_layer (
 	input master_clk,
 	input pixel_clk,
 	input pcb,	
+	input [7:0] VPIX,	
 	input [7:0] VPIXSCRL,
 	input [8:0] HPIXSCRL,
 	input SCREEN_FLIP,
@@ -77,7 +78,7 @@ wire [7:0] U6K_BG_A77_08_out; //eprom data output
 reg [14:0] BGROM_ADDR;
 
 always @(*) begin
-	BGROM_ADDR <= (pcb) ? 		 ({1'b0,BG_RAMD[10:0],VPIXSCRL[2:0]}) ://tiger heli or 16K BG ROMs
+	BGROM_ADDR <= (pcb) ? 		 ({1'b0,BG_RAMD[10:0],VPIXSCRL[2:0]}) ://tiger heli or 16K BG ROMs - removed VPIXSCRL[2:0]
 										 ({BG_RAMD[11:0],VPIXSCRL[2:0]});       //slapfight or 32K BG ROMs	
 end
 

@@ -16,8 +16,8 @@
 		<dip bits="13" name="Screen" ids="Inverted,Normal"/>
 		<dip bits="12" name="Game Style" ids="Upright,Table"/>
 		<dip bits="11" name="Attract Sound" ids="OFF,ON"/>
-		<dip bits="8,9,10" name="Coinage" ids="Freeplay,3 Coins/2 Credits,3 Coins/1 Credit,2 Coins/3 Credits,2 Coin/1 Credit,1 Coin/3 Credit,1 Coin/2 Credit,1 Coin/1 Credit"/>
-		<dip bits="21,22,23" name="Not Used" ids="7,6,5,4,3,2,1,0"/>
+		<dip bits="8,10" name="Coinage" ids="Freeplay,3 Coins/2 Credits,3 Coins/1 Credit,2 Coins/3 Credits,2 Coin/1 Credit,1 Coin/3 Credit,1 Coin/2 Credit,1 Coin/1 Credit"/>
+		<dip bits="21,23" name="Not Used" ids="7,6,5,4,3,2,1,0"/>
 		<dip bits="20" name="Bonus Levels" ids="50000 - 120000,20000-80000"/>
 		<dip bits="18,19" name="Difficulty" ids="Difficult,Normal,Easy"/>
 		<dip bits="16,17" name="Number of Tiger Helis" ids="2,1,5,3"/>

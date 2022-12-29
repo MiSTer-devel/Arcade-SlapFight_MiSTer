@@ -161,7 +161,6 @@ always @(posedge SPR_LAT_INDX) SPR_IDX_D[7:0] <= SPRITE_RAM_D;	//S2_U1J
 always @(posedge SPR_LAT_HPOS) SPR_HPOS_D[7:0] <= SPRITE_RAM_D;	//S2_U1L
 always @(posedge SPR_LAT_XDAT) begin //S2_U1K
 	SPR_HPOS_D[8]	<=SPRITE_RAM_D[0];
-//	SPR_COL_D		<=({SPRITE_RAM_D[4],SPRITE_RAM_D[3],SPRITE_RAM_D[2],SPRITE_RAM_D[1]});
 	SPR_IDX_D[9:8]	<=SPRITE_RAM_D[7:6];
 	SPR_EXT_D      <=SPRITE_RAM_D;
 end
@@ -506,7 +505,7 @@ wire clear_pixel=pixel_blank[7];
 
 //wire [7:0] pix_out2;
 always @(posedge pixel_clk) SP_PX_D = (!SPR_LINEA) ?  LINEA_PIXEL : LINEB_PIXEL;
-assign pix_out2=(!clear_pixel) ? 8'b00000000 : SP_PX_D;
+//assign pix_out2=(!clear_pixel) ? 8'b00000000 : SP_PX_D;
 assign pixel_output=SP_PX_D;
 
 endmodule

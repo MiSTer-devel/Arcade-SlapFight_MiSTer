@@ -39,6 +39,9 @@
 		<part crc="422D946B" name="a77_10.8h"/>
 		<part crc="B1B7B925" name="a77_11.7j"/>
 		<part crc="8545D397" name="a77_12.8j"/>
+		<part crc="a0efaf99" name="21_82s129.12q"/>
+		<part crc="5cbf9fbf" name="19_82s129.12n"/>
+		<part crc="a56d57e5" name="20_82s129.12m"/>		
 	</rom>
 	<rom index="3" md5="none">
 		<part>

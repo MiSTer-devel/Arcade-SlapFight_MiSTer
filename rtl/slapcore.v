@@ -20,6 +20,7 @@ module slapfight_fpga(
 	output [3:0] RED,     	//from fpga core to sv
 	output [3:0] GREEN,		//from fpga core to sv
 	output [3:0] BLUE,		//from fpga core to sv
+	output core_pix_clk,		//from fpga core to sv	
 	output H_SYNC,				//from fpga core to sv
 	output V_SYNC,				//from fpga core to sv
 	output H_BLANK,
@@ -338,6 +339,7 @@ assign clk_6M_1=U6Q_out[0];
 assign pixel_clk=!U6Q_out[0];
 assign clk_6M_3=!U6Q_out[2];
 
+assign core_pix_clk=pixel_clk;
 
 wire PUR = 1'b1;
 
@@ -654,7 +656,7 @@ end
 jt49_bus AY_1_S2_U11G(
     .rst_n(AU_ENABLE),
     .clk(clkaudio),    				// signal on positive edge 
-    .clk_en(1),  						/* synthesis direct_enable = 1 ayclk_1p5M*/
+    .clk_en(1),  						/* synthesis direct_enable = 1 */
     
     .bdir(AY_1_BDIR),						// bus control pins of original chip
     .bc1(AY_1_BC1),
@@ -829,7 +831,7 @@ cprom_3 S2_U12N  //Green Colour PROM
 
 assign H_SYNC = LINE_CLK;
 assign V_SYNC = ROM15_out[0];
-assign H_BLANK =  U1C_Q[3] | ((IO2_SF) ? HPIX>284 : HPIX<12) ;
+assign H_BLANK =  U1C_Q[3] | ((IO2_SF) ? HPIX>282 : HPIX<14) ;  //283/13=852
 assign V_BLANK = LINE_CLK2;
 
 endmodule

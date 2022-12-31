@@ -46,7 +46,7 @@ module selector
 
 
 		if     (ioctl_addr < 'h04000) ep0_cs = 1; // 0x4000 13   - Main CPU
-		if     (ioctl_addr < 'h08000) ep0b_cs = 1;// 0x4000 13   - Main CPU
+		else if(ioctl_addr < 'h08000) ep0b_cs = 1;// 0x4000 13   - Main CPU
 		else if(ioctl_addr < 'h10000) ep1_cs = 1; // 0x8000 14   - Main CPU
 		else if(ioctl_addr < 'h12000) ep2_cs = 1; // 0x2000 14	- Audio CPU Program
 		else if(ioctl_addr < 'h14000) ep3_cs = 1; // 0x2000 12   - Foreground - Chars

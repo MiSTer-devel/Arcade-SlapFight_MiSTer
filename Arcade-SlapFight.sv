@@ -223,7 +223,7 @@ wire [21:0] gamma_bus;
 
 //////////////////////////////////////////////////////////////////
 
-wire [1:0] ar = status[20:19];
+wire [1:0] ar = status[30:29];  //[20:19]
 
 assign VIDEO_ARX = (!ar) ? ((status[2])  ? 8'd4 : 8'd3) : (ar - 1'd1);
 assign VIDEO_ARY = (!ar) ? ((status[2])  ? 8'd3 : 8'd4) : 12'd0;
@@ -239,12 +239,28 @@ always @(posedge clk_sys) begin
 	mod_other <= (mod == 1);
 end
 
+// Status Bit Map:
+//                  Upper                          Lower
+//     0         1         2         3          4         5         6
+//     01234567890123456789012345678901 23456789012345678901234567890123
+//     0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
+//AR:                               XXX
+//OR:    X
+//SD:     XXX  
+//MRA:         XXXXXXXXXXXXXXXX
+//HI :                          XX
+
+
+//59.94 / 56.89Hz = 1.053612234136052
+//37.93 / 36Mhz
+
 `include "build_id.v"
 localparam CONF_STR = {
 	"A.SLAPFIGHT;;",
-	"H0OJK,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
-	"H1H0O2,Orientation,Vert,Horz;",
+	"OTU,Aspect ratio,Original,Full Screen;",
+	"O2,Orientation,Vert,Horz;",
 	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+//	"OV,Frequency,60,Original;",	
 	"-;",
 	"DIP;",
 	"-;",
@@ -311,19 +327,20 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 
 ////////////////////   CLOCKS   ///////////////////
 
-wire clkm_36MHZ,clkc_12MHz;
+wire clkm_36MHZ,clkm_38MHZ,clkc_12MHz;
 wire clk_3M;
 wire clk_sys=clkm_36MHZ;
-wire clk_vid;
-reg ce_pix;
+wire clk_vid=clk_sys;
+//reg ce_pix;
 
 pll pll(
 		.refclk(CLK_50M),  			// refclk.clk FPGA_CLK1_50
 		.rst(0),            			// reset.reset
 		.outclk_0(clkm_36MHZ),     // outclk0.clk
-		.outclk_1(clk_vid),        // outclk1.clk
+		.outclk_1(clkm_38MHZ),        // outclk1.clk
 		.outclk_2(clk_3M),			// outclk2.clk
-		.outclk_3(clkc_12MHz)
+		.outclk_3(clkc_12MHz),
+		.outclk_4()		
 );
 
 wire m_right  		= joystick_0[0];
@@ -342,7 +359,7 @@ wire m_pause  		= joystick_0[9];
 always @(posedge clk_vid) begin
 	reg [1:0] div;
 	div <= div + (forced_scandoubler ? 2'd1 : 2'd2);
-	ce_pix <= !div;
+	//ce_pix <= !div;
 end
 
 ///////////////////   VIDEO   ////////////////////
@@ -360,10 +377,11 @@ wire flip = 0;
 
 screen_rotate screen_rotate (.*);
 
-arcade_video #(288,12) arcade_video //  12 : 4R 4G 4B
+arcade_video #(280,12) arcade_video //  12 : 4R 4G 4B - 288
 (
 	.*,
 	.clk_video(clk_vid),
+	.ce_pix(core_pix_clk),
 	.RGB_in(rgb),
 	.HBlank(hblank),
 	.VBlank(vblank),
@@ -375,7 +393,7 @@ arcade_video #(288,12) arcade_video //  12 : 4R 4G 4B
 // PAUSE SYSTEM
 wire pause_cpu;
 wire [11:0] rgb_out;
-pause #(4,4,4,36) pause
+pause #(4,4,4,38) pause
 (
 	.*,
 	.user_button(m_pause),
@@ -421,15 +439,17 @@ hiscore #(
 wire rom_download = ioctl_download && (ioctl_index == 0);
 wire reset = (RESET | status[0] | buttons[1] | ioctl_download);
 assign LED_USER = ioctl_download;
+wire core_pix_clk;
 
 slapfight_fpga slapcore(
-	.clkm_36MHZ(clkm_36MHZ),
+	.clkm_36MHZ(clk_sys),
 	.clkf_cpu(clkc_12MHz),
 	.clkaudio(clk_3M),
 	.pcb(mod_other),
 	.RED(r),
 	.GREEN(g),
 	.BLUE(b),
+	.core_pix_clk(core_pix_clk),		//from fpga core to sv		
 	.H_SYNC(hs), //hs
 	.V_SYNC(vs), //vs
 	.H_BLANK(hblank),

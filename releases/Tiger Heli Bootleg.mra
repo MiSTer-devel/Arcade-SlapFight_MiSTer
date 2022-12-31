@@ -1,14 +1,14 @@
 <misterromdescription>
 	<name>Tiger Heli (Bootleg)</name>
 	<mameversion>0245</mameversion>
-	<setname>Tigerhb1</setname>
+	<setname>tigerhb1</setname>
 	<parent>Tigerh</parent>
 	<mratimestamp>202211250534</mratimestamp>
 	<year>1985</year>
 	<manufacturer>Toaplan</manufacturer>
 	<category>Shooter</category>
 	<rbf>SlapFight</rbf>
-	<rotation>vertical</rotation>
+	<rotation>vertical (ccw)</rotation>
 	<joystick>8-way</joystick>
 	<switches default="FF,FF,FF">
 		<dip bits="15" name="Heli Speed" ids="Fast,Normal"/>

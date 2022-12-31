@@ -1,14 +1,14 @@
 <misterromdescription>
 	<name>ALCON (Bootleg)</name>
 	<mameversion>0245</mameversion>
-	<setname>Slapfighb1</setname>
+	<setname>alcon</setname>
 	<parent>Alcon</parent>
 	<mratimestamp>202211250534</mratimestamp>
 	<year>1986</year>
 	<manufacturer>Toaplan</manufacturer>
 	<category>Shooter</category>
 	<rbf>SlapFight</rbf>
-	<rotation>vertical</rotation>
+	<rotation>vertical (ccw)</rotation>
 	<joystick>8-way</joystick>
 	<switches default="FF,FF,FF">
 		<dip bits="15" name="Cabinet Type" ids="Table,Up-Right"/>

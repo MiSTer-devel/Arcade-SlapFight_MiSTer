@@ -225,8 +225,8 @@ wire [21:0] gamma_bus;
 
 wire [1:0] ar = status[30:29];  //[20:19]
 
-assign VIDEO_ARX = (!ar) ? ((status[2])  ? 8'd4 : 8'd3) : (ar - 1'd1);
-assign VIDEO_ARY = (!ar) ? ((status[2])  ? 8'd3 : 8'd4) : 12'd0;
+assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd1132 : 12'd939) : (ar - 1'd1);
+assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd939 : 12'd1132) : 12'd0;
 
 reg mod_slap  = 0;
 reg mod_other = 0;

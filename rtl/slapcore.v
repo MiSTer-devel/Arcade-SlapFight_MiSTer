@@ -16,6 +16,7 @@ module slapfight_fpga(
 	input clkm_36MHZ,
 	input	clkaudio,
 	input clkf_cpu,	
+	input clkaudio_fpga,
 	input pcb,	
 	output [3:0] RED,     	//from fpga core to sv
 	output [3:0] GREEN,		//from fpga core to sv
@@ -33,8 +34,8 @@ module slapfight_fpga(
 	input [24:0] dn_addr,
 	input 		 dn_wr,
 	input [7:0]  dn_data,
-	output [15:0] audio_l, //from jt49_1 .sound
-	output [15:0] audio_r,  //from jt49_2 .sound
+	output signed [15:0] audio_l, //from jt49_1 .sound
+	output signed [15:0] audio_r, //from jt49_2 .sound
 	input [15:0] hs_address,
 	output [7:0] hs_data_out,
 	input [7:0] hs_data_in,
@@ -550,19 +551,13 @@ ttl_7474 #(.BLOCKS(1), .DELAY_RISE(0), .DELAY_FALL(0)) U7A_B(
 	.n_q(WR_BUFFER_FULL_68705)
 );
 
-wire [9:0] pre_sndl;
-wire [9:0] pre_sndr;
-wire [7:0] ay12F_araw, ay12F_braw, ay12F_craw;
-wire [7:0] ay12V_araw, ay12V_braw, ay12V_craw;
-wire signed [15:0] ay12F_adcrm, ay12F_bdcrm, ay12F_cdcrm;
-wire signed [15:0] ay12V_adcrm, ay12V_bdcrm, ay12V_cdcrm;
 wire AY12F_sample,AY12V_sample;
 wire [9:0] sound_outF;
 wire [9:0] sound_outV;
 
 //always @(posedge clkm_36MHZ) begin
-assign	audio_l = ({1'd0, sound_outF, 5'd0});
-assign	audio_r = ({1'd0, sound_outV, 5'd0});
+//assign	audio_l = ({1'd0, sound_outF, 5'd0});
+//assign	audio_r = ({1'd0, sound_outV, 5'd0});
 //end
 
 // *************** SECOND CPU IC SELECTION LOGIC FOR AUDIO *****************
@@ -653,9 +648,9 @@ always @(*) begin
 	AY2_IOB_in<=({1'b1,m_coin,m_start2p,m_start1p,2'b11,m_shoot,m_shoot2});
 end
 
-jt49_bus AY_1_S2_U11G(
+jt49_bus #(.COMP(2'b10)) AY_1_S2_U11G(
     .rst_n(AU_ENABLE),
-    .clk(clkaudio),    				// signal on positive edge 
+    .clk(clkaudio/*clkaudio_fpga*/),    				// signal on positive edge 
     .clk_en(1),  						/* synthesis direct_enable = 1 */
     
     .bdir(AY_1_BDIR),						// bus control pins of original chip
@@ -666,18 +661,18 @@ jt49_bus AY_1_S2_U11G(
     .dout(AY_1_databus_out),
     
 	 .sound(sound_outF),  					// combined channel output
-    .A(ay12F_araw),    						// linearised channel output
-    .B(ay12F_braw),
-    .C(ay12F_craw),
+    .A(),    						// linearised channel output
+    .B(),
+    .C(),
     .sample(AY12F_sample),
 
     .IOA_in(AY1_IOA_in),					//Dip Switch #1 - DIP1
     .IOB_in(AY1_IOB_in)						//Dip Switch #2 - DIP2
 );
 
-jt49_bus AY_2_S2_11J(
+jt49_bus #(.COMP(2'b10)) AY_2_S2_11J(
     .rst_n(AU_ENABLE),
-    .clk(clkaudio),    				// signal on positive edge
+    .clk(!clkaudio/*clkaudio_fpga*/),    				// signal on positive edge
     .clk_en(1),  						/* synthesis direct_enable = 1 */
     
     .bdir(AY_2_BDIR),	 					// bus control pins of original chip
@@ -688,9 +683,9 @@ jt49_bus AY_2_S2_11J(
     .dout(AY_2_databus_out),
     
 	 .sound(sound_outV),  					// combined channel output
-    .A(ay12V_araw),      					// linearised channel output
-    .B(ay12V_braw),
-    .C(ay12V_craw),
+    .A(),      					// linearised channel output
+    .B(),
+    .C(),
     .sample(AY12V_sample),
 
     .IOA_in(AY2_IOA_in),					//Control Inputs #1
@@ -698,6 +693,22 @@ jt49_bus AY_2_S2_11J(
 
 );
 
+//remove DC offset and combine both AY sound chips
+//I can't get the filter to work so jtframe_fir is disabled
+wire signed [15:0] audio_snd;
+
+jtframe_jt49_filters u_filters(
+            .rst    ( !AU_ENABLE   ),
+            .clk    ( clkaudio/*clkaudio_fpga*/ ),
+            .din0   ( sound_outF    ),
+            .din1   ( sound_outV    ),
+            .sample ( AY12F_sample  ),
+            .dout   ( audio_snd )
+        );
+
+assign audio_l = audio_snd;
+assign audio_r = audio_snd;
+		  
 wire [3:0] U6_7D_out,U6D_out,U7D_out,U7E_out;
 
 //------------------------------------------------- MiSTer data write selector -------------------------------------------------//
@@ -782,6 +793,8 @@ always @(*) AUDIO_CPU_NMI<= (pcb) ? !U7A_TMR_out[12] : !U7A_TMR_out[13]; //chang
 wire [7:0] SP_PX_D;
 wire [7:0] BG_PX_D;
 reg [7:0] COLOUR_REG;
+
+
 
 always @(posedge pixel_clk) begin
 	COLOUR_REG <= (FG_PX_D[0]|FG_PX_D[1]) 								? FG_PX_D : 

@@ -498,13 +498,13 @@ end
 reg [7:0] pixel_blank;
 
 //pixel blanker not enabled S2_u8C
-always @(posedge pixel_clk) begin
-	pixel_blank <= (!nCPU_RAM_SELECT) ? 8'd0 : ({pixel_blank[6:0],nCPU_RAM_SELECT});
-end
-wire clear_pixel=pixel_blank[7];
+//always @(posedge pixel_clk) begin
+//	pixel_blank <= (!nCPU_RAM_SELECT) ? 8'd0 : ({pixel_blank[6:0],nCPU_RAM_SELECT});
+//end
+//wire clear_pixel=pixel_blank[7];
 
 //wire [7:0] pix_out2;
-always @(posedge pixel_clk) SP_PX_D = (!SPR_LINEA) ?  LINEA_PIXEL : LINEB_PIXEL;
+always @(posedge pixel_clk) SP_PX_D <= (!SPR_LINEA) ?  LINEA_PIXEL : LINEB_PIXEL;
 //assign pix_out2=(!clear_pixel) ? 8'b00000000 : SP_PX_D;
 assign pixel_output=SP_PX_D;
 

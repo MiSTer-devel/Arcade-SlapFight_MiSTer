@@ -180,11 +180,8 @@ assign HDMI_FREEZE = 0;
 assign VGA_DISABLE = 0;
 assign FB_FORCE_BLANK = 0;
 
-wire [9:0] snd_right;
-wire [9:0] snd_left;
-
-assign AUDIO_S = 0;//signed for audio out
-assign AUDIO_MIX = 0;
+assign AUDIO_S = 1;//signed for audio out
+assign AUDIO_MIX = 3;
 
 assign LED_DISK = 0;
 assign LED_POWER = 0;
@@ -225,8 +222,11 @@ wire [21:0] gamma_bus;
 
 wire [1:0] ar = status[30:29];  //[20:19]
 
-assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd1132 : 12'd939) : (ar - 1'd1);
-assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd939 : 12'd1132) : 12'd0;
+//assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd1132 : 12'd939) : (ar - 1'd1);
+//assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd939 : 12'd1132) : 12'd0;
+
+assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd4 : 12'd3) : (ar - 1'd1);
+assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd3 : 12'd4) : 12'd0;
 
 reg mod_slap  = 0;
 reg mod_other = 0;
@@ -445,6 +445,7 @@ slapfight_fpga slapcore(
 	.clkm_36MHZ(clk_sys),
 	.clkf_cpu(clkc_12MHz),
 	.clkaudio(clk_3M),
+	.clkaudio_fpga(CLK_AUDIO),
 	.pcb(mod_other),
 	.RED(r),
 	.GREEN(g),

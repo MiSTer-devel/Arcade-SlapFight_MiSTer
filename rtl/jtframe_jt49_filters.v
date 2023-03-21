@@ -28,6 +28,7 @@ localparam W=11,WD=16-W;
 wire signed [W-1:0] dcrm_snd;
 reg         [W-1:0] base_snd;
 wire signed [ 15:0] dcrm16 = { dcrm_snd, dcrm_snd[W-2:W-WD-1] };
+assign dout = dcrm16;
 
 always @(posedge clk, posedge rst ) begin
     if( rst ) begin
@@ -44,7 +45,7 @@ jtframe_dcrm #(.SW(W)) u_dcrm(
     .din    ( base_snd  ),
     .dout   ( dcrm_snd  )
 );
-
+/*
 jtframe_fir #(.KMAX(126),.COEFFS("firjt49.hex")) u_fir(
     .rst    ( rst       ),
     .clk    ( clk       ),
@@ -53,6 +54,6 @@ jtframe_fir #(.KMAX(126),.COEFFS("firjt49.hex")) u_fir(
     .r_in   ( 16'd0     ),
     .l_out  ( dout      ),
     .r_out  (           )
-);
+);*/
 
 endmodule

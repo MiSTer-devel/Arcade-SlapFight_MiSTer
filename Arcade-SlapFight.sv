@@ -222,11 +222,11 @@ wire [21:0] gamma_bus;
 
 wire [1:0] ar = status[30:29];  //[20:19]
 
-//assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd1132 : 12'd939) : (ar - 1'd1);
-//assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd939 : 12'd1132) : 12'd0;
+assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd1132 : 12'd939) : (ar - 1'd1);
+assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd939 : 12'd1132) : 12'd0;
 
-assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd4 : 12'd3) : (ar - 1'd1);
-assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd3 : 12'd4) : 12'd0;
+//assign VIDEO_ARX = (!ar) ? ((status[2])  ? 12'd4 : 12'd3) : (ar - 1'd1);
+//assign VIDEO_ARY = (!ar) ? ((status[2])  ? 12'd3 : 12'd4) : 12'd0;
 
 reg mod_slap  = 0;
 reg mod_other = 0;
@@ -327,19 +327,19 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 
 ////////////////////   CLOCKS   ///////////////////
 
-wire clkm_36MHZ,clkm_38MHZ,clkc_12MHz;
+wire clkm_48MHZ,clkm_38MHZ,clkc_12MHz,clk_24MHZ;
 wire clk_3M;
-wire clk_sys=clkm_36MHZ;
+wire clk_sys=clkm_48MHZ;
 wire clk_vid=clk_sys;
 //reg ce_pix;
 
 pll pll(
 		.refclk(CLK_50M),  			// refclk.clk FPGA_CLK1_50
 		.rst(0),            			// reset.reset
-		.outclk_0(clkm_36MHZ),     // outclk0.clk
-		.outclk_1(clkm_38MHZ),        // outclk1.clk
-		.outclk_2(clk_3M),			// outclk2.clk
-		.outclk_3(clkc_12MHz),
+		.outclk_0(clkm_48MHZ),     // outclk0.clk
+		.outclk_1(),        			// outclk1.clk
+		.outclk_2(),					// outclk2.clk
+		.outclk_3(),
 		.outclk_4()		
 );
 
@@ -442,10 +442,7 @@ assign LED_USER = ioctl_download;
 wire core_pix_clk;
 
 slapfight_fpga slapcore(
-	.clkm_36MHZ(clk_sys),
-	.clkf_cpu(clkc_12MHz),
-	.clkaudio(clk_3M),
-	.clkaudio_fpga(CLK_AUDIO),
+	.clkm_48MHZ(clk_sys),
 	.pcb(mod_other),
 	.RED(r),
 	.GREEN(g),

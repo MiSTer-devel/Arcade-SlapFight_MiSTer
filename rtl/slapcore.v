@@ -31,8 +31,8 @@ module slapfight_fpga(
 	input [24:0] dn_addr,
 	input 		 dn_wr,
 	input [7:0]  dn_data,
-	output signed [15:0] audio_l, //from jt49_1 .sound
-	output signed [15:0] audio_r, //from jt49_2 .sound
+	output signed [15:0] audio_l, //from jt49_1 & 2
+	output signed [15:0] audio_r, //from jt49_1 & 2
 	input [15:0] hs_address,
 	output [7:0] hs_data_out,
 	input [7:0] hs_data_in,
@@ -40,13 +40,13 @@ module slapfight_fpga(
 );
 
 //SLAPFIGHT PIXEL REGISTERS & COUNTERS
-reg [7:0] VPIX,VSCRL_sum_in;
+reg  [7:0] VPIX,VSCRL_sum_in;
 reg [11:0] VCNT;
 wire [7:0] VSCRL;
 wire [7:0] VPIXSCRL;
 reg [11:0] HPIX;
-reg [8:0] HSCRL;
-reg [8:0] HPIXSCRL;
+reg  [8:0] HSCRL;
+reg  [8:0] HPIXSCRL;
 
 reg clkm_24MHZ;
 
@@ -73,11 +73,6 @@ wire U8E_cout;
 
 always @(posedge V_SCRL_SEL) VSCRL_sum_in<=(pcb) ? ({Z80A_databus_out[7:4],!IO2_SF,!IO2_SF,!IO2_SF,!IO2_SF}) : Z80A_databus_out; //AY1_IOB_in[7:5]
 always @(posedge H_SYNC) LINE_CLK2<=ROM15_out[1];
-
-//(pcb) ? 0 : 
-
-//always @(negedge CPU_RAM_SELECT) Z80M_INT=INT_ENABLE;
-
 
 ttl_7474 #(.BLOCKS(1), .DELAY_RISE(0), .DELAY_FALL(0)) U9H_A(
 	.n_pre(PUR),
@@ -180,7 +175,6 @@ ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U1H(
 	.sum(U1H_sum),
 	.c_out(U1H_cout)
 );
-//SLAPFIGHT PIXEL COUNTERS
 
 //SLAPFIGHT REGISTERS
 
@@ -342,8 +336,6 @@ T80pa Z80A(
 	.BUSRQ_n(PUR),
 	.NMI_n(PUR),
 	.CLK(clkf_cpu/*maincpuclk_6M*/), ////clkf_cpu
-	.CEN_p(1), //maincpuclk_6M
-	.CEN_n(1), //!maincpuclk_6M
 	.MREQ_n(Z80_MREQ),
 	.IORQ_n(Z80M_IOREQ),
 	.DI(Z80A_databus_in),
@@ -357,9 +349,6 @@ wire RD_BUFFER_FULL_68705,WR_BUFFER_FULL_68705;
 
 //CPU read selection logic
 // ******* PRIMARY CPU IC SELECTION LOGIC FOR TILE, SPRITE, SOUND & GAME EXECUTION ********
-//always @(posedge maincpuclk_6M) begin
-
- 
 assign Z80A_databus_in =	(!(SEL_ROM0A)&!Z80_RD) 						? prom_prog1_out:  //&!Z80_RD implied
 									(!(SEL_ROM0B)&!Z80_RD)						? prom_prog1b_out:
 									(!SEL_ROM1&!Z80_RD) 							? prom_prog2_out: //&!Z80_RD implied
@@ -372,10 +361,6 @@ assign Z80A_databus_in =	(!(SEL_ROM0A)&!Z80_RD) 						? prom_prog1_out:  //&!Z80
 									(!SPRITE_RAM&!Z80_RD)	   				? SP_RAMD_out:
 									(!AUDIO_CPU_PORT&!AU_RAM_CS&!Z80_RD)	? AUDIO_RAMM_out:
 									8'b00000000;
-
-//end
-
-//assign Z80A_databus_in = rZ80A_databus_in;
 
 wire FG_WAIT,BG_WAIT;
 
@@ -538,16 +523,17 @@ assign AUD_in =					(!AU_ROM_CS&!AURD) ? S2_U12D_AU_A77_02_out :
 										(!AU_IO&!AURD&!AY_2_SEL) ? AY_2_databus_out :										
 										8'b00000000;
 
+
 //Second Z80 CPU responsible for audio
-T80pa Z80B(
+wire AUDIO_CPU_BUSACK;
+
+T80s Z80B(
 	.RESET_n(AU_ENABLE),
-	.WAIT_n(PUR),
+	.WAIT_n(!pause),
 	.INT_n(PUR),
 	.BUSRQ_n(AUDIO_CPU_PORT),
 	.NMI_n(AUDIO_CPU_NMI),
-	.CLK(maincpuclk_6M/*aucpuclk_3M*/), //maincpuclk_6M
-	.CEN_p(1),
-	.CEN_n(1),
+	.CLK(aucpuclk_3M), 
 	.MREQ_n(AUIMREQ),
 	.DI(AUD_in),
 	.DO(AUD_out),
@@ -578,13 +564,8 @@ dpram_dc #(.widthad_a(11)) S2_U11B //sf
 	.wren_b(!AUDIOM_OK & !Z80_WR),
 	.q_b(AUDIO_RAMM_out)
 );
-//assign AUD_in = rAUD_in;
 
 
-reg [7:0] rAUD_in;
-reg [7:0] rZ80A_databus_in;
-
-wire AUDIO_CPU_BUSACK;
 
 //AY_1 chip selects
 wire AY_1_BDIR=!(AUA[0]|AY_1_SEL);
@@ -669,11 +650,9 @@ jtframe_jt49_filters u_filters(
             .dout   ( audio_snd     )
         );
 
-assign audio_l = audio_snd;
-assign audio_r = audio_snd;
+assign audio_l = (pause) ? 0 : audio_snd;
+assign audio_r = (pause) ? 0 : audio_snd;
 		  
-wire [3:0] U6_7D_out,U6D_out,U7D_out,U7E_out;
-
 //------------------------------------------------- MiSTer data write selector -------------------------------------------------//
 //Instantiate MiSTer data write selector to generate write enables for loading ROMs into the FPGA's BRAM
 wire ep0_cs_i, ep0b_cs_i, ep1_cs_i, ep2_cs_i, ep3_cs_i, ep4_cs_i, ep5_cs_i, ep6_cs_i, ep7_cs_i, ep8_cs_i,ep9_cs_i,ep10_cs_i,ep11_cs_i,ep12_cs_i,ep13_cs_i,ep_dummy_cs_i,cp1_cs_i,cp2_cs_i,cp3_cs_i;

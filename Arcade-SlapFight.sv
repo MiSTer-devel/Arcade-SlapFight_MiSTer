@@ -50,6 +50,8 @@ module emu
 	input  [11:0] HDMI_WIDTH,
 	input  [11:0] HDMI_HEIGHT,
 	output        HDMI_FREEZE,
+	output        HDMI_BLACKOUT,
+	output        HDMI_BOB_DEINT,
 
 `ifdef MISTER_FB
 	// Use framebuffer in DDRAM
@@ -177,6 +179,9 @@ wire [15:0] sdram_sz;
 assign VGA_F1 = 0;
 assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
+assign HDMI_BLACKOUT = 0;
+assign HDMI_BOB_DEINT = 0;
+
 assign VGA_DISABLE = 0;
 assign FB_FORCE_BLANK = 0;
 

@@ -371,36 +371,27 @@ eprom_12 SP_12
 );
 
 wire SPR_PIX_A,SPR_PIX_B,SPR_PIX_C,SPR_PIX_D;
+reg [7:0] Qout_09,Qout_10,Qout_11,Qout_12;
 
-ls166 S2_U7G(
-	.clk(pixel_clk),
-	.pin(SP_09_out),
-	.PE(SPR_ROM_LD),
-	.QH(SPR_PIX_A)
-);
+always @(posedge pixel_clk) begin
+	if (!SPR_ROM_LD) begin
+		Qout_09 <= SP_09_out;
+		Qout_10 <= SP_10_out;
+		Qout_11 <= SP_11_out;
+		Qout_12 <= SP_12_out;
+	end
+	else begin
+		Qout_09 <= {1'b0,Qout_09[7:1]};
+		Qout_10 <= {1'b0,Qout_10[7:1]};
+		Qout_11 <= {1'b0,Qout_11[7:1]};
+		Qout_12 <= {1'b0,Qout_12[7:1]};
+	end
+end
 
-ls166 S2_U7K(
-	.clk(pixel_clk),
-	.pin(SP_11_out),
-	.PE(SPR_ROM_LD),
-	.QH(SPR_PIX_B)
-);
-
-ls166 S2_U9G(
-	.clk(pixel_clk),
-	.pin(SP_10_out),
-	.PE(SPR_ROM_LD),
-	.QH(SPR_PIX_C)
-);
-
-ls166 S2_U9K(
-	.clk(pixel_clk),
-	.pin(SP_12_out),
-	.PE(SPR_ROM_LD),
-	.QH(SPR_PIX_D)
-);
-
-
+assign SPR_PIX_A = Qout_09[0];
+assign SPR_PIX_B = Qout_11[0];
+assign SPR_PIX_C = Qout_10[0];
+assign SPR_PIX_D = Qout_12[0];
 
 wire [7:0] LINEBUF_A_D_in;
 wire [7:0] LINEBUF_A_D_out;

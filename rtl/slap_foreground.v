@@ -109,32 +109,32 @@ assign HPIX_LT_out	= HPIX_LT;
 		.WR(dn_wr)							//Download to ROM 
 	);
 
-	wire U7F_QA,U7F_QH;
-	wire U7G_QA,U7G_QH;
+	 reg [7:0] Qout_03,Qout_04;
 
-	//render each pixel to the screen by
-	//shifting each pixel out of ROM
-	ls299 U7F (
-		.clk(pixel_clk),
-		.pin(U6F_FG_A77_04_out),
-		.S0(FG_S0),
-		.S1(FG_S1),
-		.QA(U7F_QA),
-		.QH(U7F_QH)
-	);
+    wire load       =  FG_S0 &  FG_S1;
+    wire shift_left =  FG_S0 & ~FG_S1;
+    wire shift_right= ~FG_S0 &  FG_S1;
 
-	ls299 U7G (
-		.clk(pixel_clk),
-		.pin(U6G_FG_A77_03_out),
-		.S0(FG_S0),
-		.S1(FG_S1),
-		.QA(U7G_QA),
-		.QH(U7G_QH)
-	);
+    always @(posedge pixel_clk) begin
+        if (load) begin
+            Qout_03 <= U6G_FG_A77_03_out;
+            Qout_04 <= U6F_FG_A77_04_out;
 
+		  end	
+        else if (shift_left) begin
+            Qout_03 <= {Qout_03[6:0], 1'b0};
+            Qout_04 <= {Qout_04[6:0], 1'b0};
+		  end
+        else if (shift_right) begin
+            Qout_03 <= {1'b0, Qout_03[7:1]};
+            Qout_04 <= {1'b0, Qout_04[7:1]};
+		  end
+
+    end	
+	
 	always @(*) begin //posedge pixel_clk
-		FG_PX_D[0] <= (SCREEN_FLIP) ?   U7G_QA : U7G_QH;
-		FG_PX_D[1] <= (SCREEN_FLIP) ?   U7F_QA : U7F_QH;
+		FG_PX_D[0] <= (SCREEN_FLIP) ?   Qout_03[0] : Qout_03[7];
+		FG_PX_D[1] <= (SCREEN_FLIP) ?   Qout_04[0] : Qout_04[7];
 	end
 
 	always @(posedge colour_copy) FG_PX_D[7:2]<=FG_RAMD[15:10];

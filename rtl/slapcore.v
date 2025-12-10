@@ -71,7 +71,17 @@ ROM15 U8B_ROM15(
 wire U9E_cout;
 wire U8E_cout;
 
-always @(posedge V_SCRL_SEL) VSCRL_sum_in<=(pcb) ? ({Z80A_databus_out[7:4],!IO2_SF,!IO2_SF,!IO2_SF,!IO2_SF}) : Z80A_databus_out; //AY1_IOB_in[7:5]
+wire       IO2_SF_n   = ~IO2_SF;
+wire [3:0] IO2_SF_rep = {4{IO2_SF_n}};  // one inverter, fanned out
+
+always @(posedge V_SCRL_SEL) begin
+    VSCRL_sum_in[7:4] <= Z80A_databus_out[7:4];            // always the same
+    VSCRL_sum_in[3:0] <= pcb ? IO2_SF_rep                  // only mux lower nibble
+                             : Z80A_databus_out[3:0];
+end
+
+//always @(posedge V_SCRL_SEL) VSCRL_sum_in<=(pcb) ? ({Z80A_databus_out[7:4],!IO2_SF,!IO2_SF,!IO2_SF,!IO2_SF}) : Z80A_databus_out; //AY1_IOB_in[7:5]
+
 always @(posedge H_SYNC) LINE_CLK2<=ROM15_out[1];
 
 ttl_7474 #(.BLOCKS(1), .DELAY_RISE(0), .DELAY_FALL(0)) U9H_A(

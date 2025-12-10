@@ -131,48 +131,38 @@ eprom_8 U6K_BG_A77_08
 	.WR(dn_wr)
 );
 
-/* */
-wire U7PN_QA,U7PN_QH,U7LM_QA,U7LM_QH,U3ML_QA,U3ML_QH,U7KJ_QA,U7KJ_QH;
+	 reg [7:0] Qout_05,Qout_06,Qout_07,Qout_08;
 
-	ls299 U7PN (
-		.clk(pixel_clk),
-		.pin(U6P_BG_A77_05_out),
-		.S0(BG_S0),
-		.S1(BG_S1),
-		.QA(U7PN_QA),
-		.QH(U7PN_QH)
-	);
+    wire load       =  BG_S0 &  BG_S1;
+    wire shift_left =  BG_S0 & ~BG_S1;
+    wire shift_right= ~BG_S0 &  BG_S1;
 
-	ls299 U7LM (
-		.clk(pixel_clk),
-		.pin(U6N_BG_A77_06_out),
-		.S0(BG_S0),
-		.S1(BG_S1),
-		.QA(U7LM_QA),
-		.QH(U7LM_QH)
-	);
+    always @(posedge pixel_clk) begin
+        if (load) begin
+            Qout_05 <= U6P_BG_A77_05_out;
+            Qout_06 <= U6N_BG_A77_06_out;
+            Qout_07 <= U6M_BG_A77_07_out;
+            Qout_08 <= U6K_BG_A77_08_out;
+		  end	
+        else if (shift_left) begin
+            Qout_05 <= {Qout_05[6:0], 1'b0};
+            Qout_06 <= {Qout_06[6:0], 1'b0};
+            Qout_07 <= {Qout_07[6:0], 1'b0};
+            Qout_08 <= {Qout_08[6:0], 1'b0};				
+		  end
+        else if (shift_right) begin
+            Qout_05 <= {1'b0, Qout_05[7:1]};
+            Qout_06 <= {1'b0, Qout_06[7:1]};
+            Qout_07 <= {1'b0, Qout_07[7:1]};
+            Qout_08 <= {1'b0, Qout_08[7:1]};				
+		  end
+        // else: implicit hold
 
-	ls299 U3ML (
-		.clk(pixel_clk),
-		.pin(U6M_BG_A77_07_out),
-		.S0(BG_S0),
-		.S1(BG_S1),
-		.QA(U3ML_QA),
-		.QH(U3ML_QH)
-	);
-
-	ls299 U7KJ (
-		.clk(pixel_clk),
-		.pin(U6K_BG_A77_08_out),
-		.S0(BG_S0),
-		.S1(BG_S1),
-		.QA(U7KJ_QA),
-		.QH(U7KJ_QH)
-	);
-	
-	always @(*) begin 
-		BG_PX_D[3:0] <= (SH_REG_DIR) ? {U7KJ_QH,U3ML_QH,U7LM_QH,U7PN_QH} : {U7KJ_QA,U3ML_QA,U7LM_QA,U7PN_QA} ;
-	end
+    end
+	 
+always @(*) begin 
+	 BG_PX_D[3:0] <= (SH_REG_DIR) ? {Qout_08[7],Qout_07[7],Qout_06[7],Qout_05[7]} : {Qout_08[0],Qout_07[0],Qout_06[0],Qout_05[0]} ;
+end
 	
 	always @(posedge BG_COLOUR_COPY) BG_PX_D[7:4]<=BG_RAMD[15:12];//pause_cnt;//BG_RAMD[15:12];
 

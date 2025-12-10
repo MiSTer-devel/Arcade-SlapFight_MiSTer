@@ -184,7 +184,7 @@ assign #(DELAY_RISE, DELAY_FALL) c_out = C_computed;
 endmodule
 
 
-module ls138x ( //used
+/*module ls138x ( //used
 	input  [2:0] A,
   	input		 nE1,
   	input		 nE2,
@@ -219,6 +219,35 @@ end
 
 assign Y = Q;
 
+endmodule*/
+
+// 74LS138: 3-to-8 decoder, active-low outputs
+// Enables: nE1 (active-low), nE2 (active-low), E3 (active-high)
+module ls138x (
+    input  [2:0] A,
+    input        nE1,
+    input        nE2,
+    input        E3,
+    output [7:0] Y
+);
+
+    wire A0 = A[0];
+    wire A1 = A[1];
+    wire A2 = A[2];
+
+    // "Disabled" term: when this is 1, all Y[i] are 1.
+    wire G = nE1 | nE2 | ~E3;
+
+    // Each Y[i] is only 0 for one combination of A when enabled.
+    assign Y[0] = G |  A2 |  A1 |  A0;  // A=000
+    assign Y[1] = G |  A2 |  A1 | ~A0;  // A=001
+    assign Y[2] = G |  A2 | ~A1 |  A0;  // A=010
+    assign Y[3] = G |  A2 | ~A1 | ~A0;  // A=011
+    assign Y[4] = G | ~A2 |  A1 |  A0;  // A=100
+    assign Y[5] = G | ~A2 |  A1 | ~A0;  // A=101
+    assign Y[6] = G | ~A2 | ~A1 |  A0;  // A=110
+    assign Y[7] = G | ~A2 | ~A1 | ~A0;  // A=111
+
 endmodule
 
 
@@ -240,10 +269,7 @@ module jt74138( // ref: 74??138
     assign #30 y_b = yb_nodly;
 endmodule
 
-
-
-
-module ls139x //used
+/*module ls139x //used
 (
 	input  [1:0] A,
   	input  		 nE,
@@ -269,8 +295,26 @@ end
 
 assign Y=Q;
 		
-endmodule
+endmodule*/
 
+// 74LS139 2-to-4 decoder, active-low enable and outputs
+module ls139x
+(
+    input  [1:0] A,
+    input        nE,   // active-low enable
+    output [3:0] Y     // active-low outputs
+);
+
+    wire A0 = A[0];
+    wire A1 = A[1];
+
+    // Each Y[i] is only 0 for one combination; otherwise 1
+    assign Y[0] = nE |  A1 |  A0;  // 0 when nE=0, A1=0, A0=0
+    assign Y[1] = nE |  A1 | ~A0;  // 0 when nE=0, A1=0, A0=1
+    assign Y[2] = nE | ~A1 |  A0;  // 0 when nE=0, A1=1, A0=0
+    assign Y[3] = nE | ~A1 | ~A0;  // 0 when nE=0, A1=1, A0=1
+
+endmodule
 
 module ls74x  //not used
 (

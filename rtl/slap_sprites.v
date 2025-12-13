@@ -48,6 +48,7 @@ wire nCPU_RAM_SYNC=!CPU_RAM_SYNC;
 always @(posedge pixel_clk or negedge nCPU_RAM_SYNC) 	ROM18_addr <= (!nCPU_RAM_SYNC) ? 8'd0 :
 																		(!RESET_LD_CTR) ? 8'b00000100 : ROM18_addr+1; //S2_U4B & S2_U2C - is there a clear?
 
+																		
 wire [7:0] ROM18_out;
 ROM18 S2_U2B_ROM18(
     .clk(master_clk),
@@ -109,23 +110,28 @@ ROM16 S2_U1E_ROM16(
     .data(ROM16_out)
 );
 
-reg [5:0] S2_U1F_out;
+//S2_U1F;
+reg [2:0] CMD_decode;
+reg       SPR_INC_CNT;
+reg       RST_REG_CTR;
 
-always @(posedge pixel_clk) S2_U1F_out <= ({ROM16_out[1:0],ROM17_out[3:0]});
 
-wire SPR_INC_CNT=S2_U1F_out[3];
-wire RST_REG_CTR=S2_U1F_out[5];
+always @(posedge pixel_clk or posedge SPR_CPU_RAM_SELECT ) {RST_REG_CTR,SPR_INC_CNT,CMD_decode} <= (SPR_CPU_RAM_SELECT) ? 5'b00000 : ({ROM16_out[1],ROM17_out[3:0]});
 
 always @(posedge SPR_INC_CNT or posedge SPR_CPU_RAM_SELECT) SPR_CNT <= (SPR_CPU_RAM_SELECT) ? 12'd0 : SPR_CNT+12'd1;  //this code doesn't see the clear is it isn't clocking at the time
 
-wire S2_U1G_7,S2_U1G_9,S2_U1G_10,SPR_LAT_INDX,SPR_LAT_VPOS,SPR_LAT_XDAT,SPR_LAT_HPOS,S2_U1G_O0;
-ls138x S2_U1G( //sf
-  .nE1(1'b0),
-  .nE2(pixel_clk),
-  .E3(1'b1),
-  .A(S2_U1F_out[2:0]),
-  .Y({S2_U1G_7,S2_U1G_9,S2_U1G_10,SPR_LAT_INDX,SPR_LAT_VPOS,SPR_LAT_XDAT,SPR_LAT_HPOS,S2_U1G_O0})
-);
+
+
+//S2_U1G decoder (LS138)
+wire S2_U1G_7,S2_U1G_9,S2_U1G_10,SPR_LAT_INDX,SPR_LAT_VPOS,SPR_LAT_XDAT,SPR_LAT_HPOS;
+
+assign SPR_LAT_HPOS = pixel_clk |  CMD_decode[2] |  CMD_decode[1] | ~CMD_decode[0];  // A=001
+assign SPR_LAT_XDAT = pixel_clk |  CMD_decode[2] | ~CMD_decode[1] |  CMD_decode[0];  // A=010
+assign SPR_LAT_VPOS = pixel_clk |  CMD_decode[2] | ~CMD_decode[1] | ~CMD_decode[0];  // A=011
+assign SPR_LAT_INDX = pixel_clk | ~CMD_decode[2] |  CMD_decode[1] |  CMD_decode[0];  // A=100
+assign S2_U1G_10    = pixel_clk | ~CMD_decode[2] |  CMD_decode[1] | ~CMD_decode[0];  // A=101
+assign S2_U1G_9     = pixel_clk | ~CMD_decode[2] | ~CMD_decode[1] |  CMD_decode[0];  // A=110
+assign S2_U1G_7     = pixel_clk | ~CMD_decode[2] | ~CMD_decode[1] | ~CMD_decode[0];  // A=111
 
 
 //*********  END: register latches **************
@@ -220,16 +226,10 @@ wire SPR32_BUF_WR = 	S2_U4C_C&S2_U4A_6;
 reg [3:0] SPR_32K_HI;
 always @(posedge S2_U5A_A) SPR_32K_HI <= (!SPR32_BUF_WR) ? S2_U4F_sum : S2_U2F_out;
 
-assign SPR_32K_A[7:0] = (CPU_RAM_SYNC) ? SPR_VPOS_CNT : VPIX-1;
+assign SPR_32K_A[7:0]  = CPU_RAM_SYNC ? SPR_VPOS_CNT : VPIX-8'd1;
 assign SPR_32K_A[11:8] = SPR_32K_HI;
 
-ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U9E(
-	.a(SPR_32K_A[11:8]),
-	.b(4'b0001),
-	.c_in(1'b0),  
-	.sum(S2_U4F_sum),
-	.c_out()
-);
+assign S2_U4F_sum = SPR_32K_HI + 4'd1;
 
 
 wire [11:0] SPR_32K_A;
@@ -499,5 +499,6 @@ reg [7:0] pixel_blank;
 always @(posedge pixel_clk) SP_PX_D <= (!SPR_LINEA) ?  LINEA_PIXEL : LINEB_PIXEL;
 //assign pix_out2=(!clear_pixel) ? 8'b00000000 : SP_PX_D;
 assign pixel_output=SP_PX_D;
+//assign pixel_output=8'b00000000;
 
 endmodule

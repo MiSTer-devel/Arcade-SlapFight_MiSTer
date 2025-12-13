@@ -80,8 +80,6 @@ always @(posedge V_SCRL_SEL) begin
                              : Z80A_databus_out[3:0];
 end
 
-//always @(posedge V_SCRL_SEL) VSCRL_sum_in<=(pcb) ? ({Z80A_databus_out[7:4],!IO2_SF,!IO2_SF,!IO2_SF,!IO2_SF}) : Z80A_databus_out; //AY1_IOB_in[7:5]
-
 always @(posedge H_SYNC) LINE_CLK2<=ROM15_out[1];
 
 ttl_7474 #(.BLOCKS(1), .DELAY_RISE(0), .DELAY_FALL(0)) U9H_A(
@@ -93,23 +91,7 @@ ttl_7474 #(.BLOCKS(1), .DELAY_RISE(0), .DELAY_FALL(0)) U9H_A(
 	.n_q(Z80M_INT)
 );
 
-ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U9E(
-	.a(VPIX[3:0]),
-	.b(VSCRL_sum_in[3:0]),
-	.c_in(1'b0),  
-	.sum(VSCRL[3:0]),
-	.c_out(U9E_cout)
-);
-
-ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U8E(
-	.a(VPIX[7:4]),
-	.b(VSCRL_sum_in[7:4]),
-	.c_in(U9E_cout),  
-	.sum(VSCRL[7:4]),
-	.c_out(U8E_cout)
-);
-
-
+assign VSCRL=VPIX+VSCRL_sum_in; //vertical scroll
 
 //horizontal counter
 always @(posedge pixel_clk) begin
@@ -133,13 +115,9 @@ reg IO2_SF;
 
 always @(posedge RESET_n) IO2_SF<=(pcb) ? DIP1[5] : DIP1[6];	
 
-always @(posedge H_SCRL_LO_SEL) begin 
-	HSCRL[7:0]<=Z80A_databus_out;		//U3J
-end
-
+always @(posedge H_SCRL_LO_SEL) HSCRL[7:0]<=Z80A_databus_out;		//U3J
 always @(posedge H_SCRL_HI_SEL) HSCRL[8]<=Z80A_databus_out[0];		//U1G_A
-always @(posedge pixel_clk) HPIXSCRL[8:0]<={U1H_sum[0],U2J_sum,U1J_sum}; //U2H & U1C bit 0
-
+always @(posedge pixel_clk) HPIXSCRL<=HPIX[8:0]+HSCRL[8:0];  //horizontal scroll
 
 
 wire U7B_D,U7C_C,U4B_D;
@@ -156,39 +134,14 @@ wire [3:0] U1C_nQ;
 ls175 U1C(
 	.nMR(AU_ENABLE),
 	.clk(pixel_clk),
-	.D({ROM14_out[1],ROM14_out[0],ROM14_out[2],U1H_sum[0]}),
+	.D({ROM14_out[1],ROM14_out[0],ROM14_out[2],HPIXSCRL[8]}),
 	.Q(U1C_Q),
 	.nQ(U1C_nQ)
 );
 
 
-ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U1J(
-	.a(HPIX[3:0]),
-	.b(HSCRL[3:0]),
-	.c_in(1'b0),  
-	.sum(U1J_sum),
-	.c_out(U1J_cout)
-);
-
-ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U2J(
-	.a(HPIX[7:4]),
-	.b(HSCRL[7:4]),
-	.c_in(U1J_cout),  
-	.sum(U2J_sum),
-	.c_out(U2J_cout)
-);
-
-ttl_74283 #(.WIDTH(4), .DELAY_RISE(0), .DELAY_FALL(0)) U1H(
-	.a({3'b000,HPIX[8]}),
-	.b({3'b000,HSCRL[8]}),
-	.c_in(U2J_cout),  
-	.sum(U1H_sum),
-	.c_out(U1H_cout)
-);
 
 //SLAPFIGHT REGISTERS
-
-
 reg [7:0] V_SCRL;    //0xE802
 reg [7:0] MCU_PORT;  //0xE803
 

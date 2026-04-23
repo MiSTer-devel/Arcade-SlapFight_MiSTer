@@ -27,6 +27,7 @@
 module slapfight_fpga(
 	input         clkm_48MHZ,       // Master clock (48 MHz)
 	input         pcb,              // PCB select: 0=Slap Fight, 1=Tiger Heli
+	input         flip,             // Flip video
 	output  [3:0] RED,              // Red color output to video DAC
 	output  [3:0] GREEN,            // Green color output to video DAC
 	output  [3:0] BLUE,             // Blue color output to video DAC
@@ -66,6 +67,7 @@ reg   [8:0] HPIXSCRL;               // Combined horizontal scroll position
 reg         LINE_CLK2;              // Vertical blank signal (directly from ROM15[1] latched on H_SYNC)
 wire        RESET_H_COUNTERS;       // Horizontal counter reset (directly from ROM14[3])
 wire        RESET_V_COUNTERS;       // Vertical counter reset (directly from ROM15[3])
+reg         IO2_SF;
 
 //============================================================================
 // Clock Generation
@@ -140,6 +142,11 @@ ROM15 U8B_ROM15(
 //============================================================================
 wire       IO2_SF_n   = ~IO2_SF;
 wire [3:0] IO2_SF_rep = {4{IO2_SF_n}};        // Replicated for nibble operations
+localparam signed [8:0] V_POS_OFF_NORMAL = 9'sd16;
+localparam signed [8:0] V_POS_OFF_FLIP   = 9'sd8;
+wire signed [9:0] VPIX_s                 = $signed({1'b0, VPIX});
+wire signed [9:0] VPIX_OFF_s             = VPIX_s + (IO2_SF ? -$signed(V_POS_OFF_FLIP) : $signed(V_POS_OFF_NORMAL));
+wire        [7:0] VPIX_OFF               = VPIX_OFF_s[7:0];
 
 //============================================================================
 // Vertical Scroll Register
@@ -181,7 +188,7 @@ end
 assign Z80M_INT = Z80M_INT_n;
 
 // Final vertical scroll = pixel position + scroll offset
-assign VSCRL = VPIX + VSCRL_sum_in;
+assign VSCRL = VPIX_OFF + VSCRL_sum_in;
 
 //============================================================================
 // Horizontal Counter and Timing
@@ -208,14 +215,47 @@ ROM14 U2C_ROM14(
 //============================================================================
 // Screen Flip and Horizontal Scroll Registers
 //============================================================================
-reg IO2_SF;                                   // Screen flip enable
+reg io_sf_reg;                                   // Screen flip enable
 reg U1C_15;                                   // Horizontal blank timing
 reg LINE_CLK;                                 // Horizontal sync (directly from ROM14)
 
+reg flip_s1, flip_s2;
+always @(posedge clkm_48MHZ or negedge RESET_n) begin
+  if (!RESET_n) begin
+    flip_s1 <= 1'b0;
+    flip_s2 <= 1'b0;
+  end else begin
+    flip_s1 <= flip;
+    flip_s2 <= flip_s1;
+  end
+end
+wire flip_sync = flip_s2;
+
+reg line_clk2_d;
+reg flip_lat;
+
+always @(posedge clkm_48MHZ or negedge RESET_n) begin
+  if (!RESET_n) begin
+    line_clk2_d <= 1'b0;
+    flip_lat    <= 1'b0;
+    IO2_SF      <= 1'b0;
+  end else begin
+    line_clk2_d <= LINE_CLK2;
+
+    if (!line_clk2_d && LINE_CLK2) begin
+      flip_lat <= flip_sync;
+      IO2_SF <= io_sf_reg ^ flip_sync;
+    end
+  end
+end
+
 // Initialize screen flip from DIP switch on reset
 // Different DIP bit used for Tiger Heli vs Slap Fight
-always @(posedge RESET_n) begin
-	IO2_SF <= (pcb) ? DIP1[5] : DIP1[6];
+always @(posedge clkm_48MHZ or negedge RESET_n) begin
+  if (!RESET_n)
+    io_sf_reg <= 1'b0;
+  else
+    io_sf_reg <= (pcb) ? DIP1[5] : DIP1[6];
 end
 
 // Horizontal scroll registers - directly from CPU databus
@@ -241,7 +281,7 @@ end
 // CPU/Video RAM Synchronization
 // Controls when CPU can access video RAM without causing display glitches
 //============================================================================
-wire CPU_RAM_SELECT = (!LINE_CLK2 & IO_4_CPU_RAM) | pause;
+wire CPU_RAM_SELECT = (!LINE_CLK2 & IO_4_CPU_RAM);	//Display sprites when paused
 wire CPU_RAM_SYNC   = U1C_15 | !IO_4_CPU_RAM | !CPU_RAM_SELECT;
 wire CPU_RAM_LBUF   = U1C_15;
 
@@ -298,7 +338,7 @@ foreground_layer slap_foreground(
 	.reset_n(RESET_n),
 	.master_clk(clkm_48MHZ),
 	.pixel_clk(pixel_clk),
-	.VPIX(VPIX),
+	.VPIX(VPIX_OFF),
 	.HPIX(HPIX[8:0]),
 	.SCREEN_FLIP(IO2_SF),
 	.ATRRAM(ATRRAM),                          // Attribute RAM select
@@ -329,7 +369,7 @@ background_layer slap_background(
 	.pixel_clk(pixel_clk),
 	.pcb(pcb),
 	.VPIXSCRL(VSCRL),
-	.HPIXSCRL(HPIXSCRL),
+	.HPIXSCRL(flip ? HPIXSCRL - 8'd16 : HPIXSCRL),
 	.SCREEN_FLIP(IO2_SF),
 	.BACKGRAM_1(BACKGRAM_1),
 	.BACKGRAM_2(BACKGRAM_2),
@@ -360,7 +400,7 @@ sprite_layer slap_sprites(
 	.pixel_clk(pixel_clk),
 	.npixel_clk(clk_6M_1),
 	.pixel_clk_lb(clk_6M_3),
-	.VPIX(VPIX),
+	.VPIX(VPIX_OFF),
 	.HPIX(HPIX),
 	.HPIX_LT(HPIX_LT),
 	.SCREEN_FLIP(IO2_SF),
@@ -910,6 +950,15 @@ cprom_3 S2_U12N(                              // Green PROM
 	.CS_DL(cp3_cs_i),
 	.WR(dn_wr)
 );
+
+localparam [7:0] VWIN_T = 8'd0;
+localparam [7:0] VWIN_B = 8'd223;
+localparam signed [8:0] V_SHIFT = 9'sd0;
+wire signed [9:0] V_Ts = $signed({1'b0, VWIN_T}) + $signed(V_SHIFT);
+wire signed [9:0] V_Bs = $signed({1'b0, VWIN_B}) + $signed(V_SHIFT);
+wire [7:0] V_T = V_Ts[7:0];
+wire [7:0] V_B = V_Bs[7:0];
+wire V_TRIM_BLANK = ($signed(VPIX_OFF_s) < $signed(V_Ts)) | ($signed(VPIX_OFF_s) > $signed(V_Bs));
 
 //============================================================================
 // Video Sync Signal Outputs

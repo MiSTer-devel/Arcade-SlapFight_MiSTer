@@ -261,6 +261,7 @@ end
 // AR:                            XX    (bits 30:29)
 // OR:   X                              (bit 2)
 // SD:    XXX                           (bits 5:3)
+// FL:       X                          (bit 6) - Flip screen
 // FQ:                              X   (bit 31) - Frequency select
 // HS:                           X      (bit 28)
 // PA:                      XX          (bits 26:25)
@@ -270,6 +271,7 @@ localparam CONF_STR = {
 	"A.SLAPFIGHT;;",
 	"OTU,Aspect ratio,Original,Full Screen;",
 	"O2,Orientation,Vert,Horz;",
+	"O6,Flip,Off,On;",
 	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
 	"OV,Frequency,Original,60Hz (Overclock);",
 	"-;",
@@ -482,7 +484,8 @@ wire [11:0] rgb = {rgb_out[11:8], rgb_out[7:4], rgb_out[3:0]};
 
 wire no_rotate = status[2] | direct_video;
 wire rotate_ccw = 0;
-wire flip = 0;
+wire flip = 1'b0;
+wire core_flip = status[6];
 
 screen_rotate screen_rotate (.*);
 
@@ -559,6 +562,7 @@ slapfight_fpga slapcore
 (
 	.clkm_48MHZ(clk_sys),
 	.pcb(mod_other),
+	.flip(core_flip),
 	.RED(r),
 	.GREEN(g),
 	.BLUE(b),
